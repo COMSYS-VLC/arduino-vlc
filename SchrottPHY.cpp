@@ -53,7 +53,7 @@ SchrottPHY::SchrottPHY() :
     ADCSRA |= (7 << ADPS0) | /*(1 << ADIE) | (1 << ADATE) | */ (1 << ADEN); //| (1 << ADSC);
 
     // Initialize Timer
-    OCR0A = 77;
+    OCR0A = 255;
     TCCR0A = (1 << WGM01);
     TCCR0B = (1 << CS02) | (1 << CS00);
     TIMSK0 = (1 << OCIE0A);
@@ -71,11 +71,11 @@ ISR(TIMER0_COMPA_vect) {
     static uint8_t delaySync = 1;
     static uint8_t delaySend = 1;
     if(0 == --delaySync) {
-        delaySync = currentPHY->synchronize();
+        delaySync = currentPHY->synchronize() * 5;
     }
     if(0 == --delaySend) {
         TOGGLE_BIT(PHYPORT_OUT, PHYPIN_DBG);
-        delaySend = currentPHY->doSend();
+        delaySend = currentPHY->doSend() * 5;
     }
 }
 
@@ -89,7 +89,7 @@ void SchrottPHY::decodeManchester(bool signal) {
             mDataEdge = false;
         } else {
             if(mac()) {
-                //UART::get() << mLastSignal << '\n';
+                UART::get() << 'x';
                 mac()->handleBit(mLastSignal);
             }
         }
@@ -110,6 +110,7 @@ uint8_t SchrottPHY::synchronize() {
         bool sample2 = sense();
 
         if(mFirstSample != sample2) {
+            UART::get() << 'y';
             return 3;
         } else {
             ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {

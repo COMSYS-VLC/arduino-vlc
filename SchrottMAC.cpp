@@ -9,6 +9,8 @@
 SchrottMAC::SchrottMAC(PHY& phy) :
         MAC(phy), mBitOffset(7), mFrameOffset(0), mState(WAIT_BE)
 {
+    mFrame << 0;
+
     phy.registerMAC(this);
 }
 
@@ -37,29 +39,57 @@ void SchrottMAC::sendPayload(const uint8_t* payload, uint8_t len) {
     UART::get() << '\n';
 
     phy().sendPayload(frame, 5 + len);
-    //uint8_t data[] = { 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA };
+    //uint8_t data[] = { 0xE7, 0x39, 0xCE, 0x73, 0x9C, 0xE7, 0x39, 0xCE, 0x73, 0x9C };
+    //uint8_t data[] = { 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8 };
     //phy().sendPayload(data, sizeof(data));
 }
 
 void SchrottMAC::handleBit(bool bit) {
-    if(bit) {
-        //UART::get() << "Writing 1: " << mFrame.at(mFrame.size() - 1) << " -> ";
-        mFrame.at(mFrame.size() - 1) |= (1 << mBitOffset);
-        //UART::get() << mFrame.at(mFrame.size() - 1) << '\n';
-    } else {
-        //UART::get() << "Writing 0: " << mFrame.at(mFrame.size() - 1) << " -> ";
-        mFrame.at(mFrame.size() - 1) &= ~(1 << mBitOffset);
-        //UART::get() << mFrame.at(mFrame.size() - 1) << '\n';
-    }
+    //UART::get() << bit << "\n";
+    //return;
+    //for(int i = 0; i < 16; ++i) {
+        //bit = (0xA8A8) & (1 << (15 - i));
+        if (bit) {
+            //UART::get() << "Writing 1: " << mFrame.at(mFrame.size() - 1) << " -> ";
+            mFrame.at(mFrame.size() - 1) |= (1 << mBitOffset);
+            //UART::get() << mFrame.at(mFrame.size() - 1) << '\n';
+        } else {
+            //UART::get() << "Writing 0: " << mFrame.at(mFrame.size() - 1) << " -> ";
+            mFrame.at(mFrame.size() - 1) &= ~(1 << mBitOffset);
+            //UART::get() << mFrame.at(mFrame.size() - 1) << '\n';
+        }
 
-    if(0 == mBitOffset) {
-        UART::get() << "---------\n";
-        mFrame << 0;
-        mBitOffset = 7;
-    } else {
-        --mBitOffset;
-    }
+        if (0 == mBitOffset) {
+            //UART::get() << "---------\n";
+            mFrame << 0;
+            mBitOffset = 7;
+        } else {
+            --mBitOffset;
+        }
+    //}
 
+    /*UART::get() << frameSize() << "\n";
+    shiftFrame();
+    UART::get() << frameSize() << "\n";
+    shiftFrame();
+    UART::get() << frameSize() << "\n";
+    shiftFrame();
+    UART::get() << frameSize() << "\n";
+    shiftFrame();
+    UART::get() << frameSize() << "\n";
+    shiftFrame();
+    UART::get() << frameSize() << "\n";
+    shiftFrame();
+    UART::get() << frameSize() << "\n";
+    shiftFrame();
+    UART::get() << frameSize() << "\n";
+    shiftFrame();
+    UART::get() << frameSize() << "\n";
+    UART::get() << frameByte(0) << " " << frameByte(1) << "\n";
+    shiftFrame();
+    UART::get() << frameSize() << "\n";
+
+    while(true);*/
 
     uint16_t fSize;
     bool needMore = false;
@@ -78,12 +108,14 @@ void SchrottMAC::handleBit(bool bit) {
 
         case WAIT_EF:
             if (1 < fSize) {
+                UART::get() << frameByte(1) << '\n';
                 if (0xEF != frameByte(1)) {
                     shiftFrame();
                     mState = WAIT_BE;
                     break;
                 } else {
                     mState = WAIT_LENGTH;
+                    UART::get() << "BEEF complete\n";
                 }
             } else {
                 needMore = true;
@@ -143,7 +175,7 @@ void SchrottMAC::shiftFrame() {
 }
 
 uint16_t SchrottMAC::frameSize() {
-    uint16_t size = mFrame.size();
+    uint16_t size = mFrame.size() - 1;
     if(mFrameOffset > (7 - mBitOffset)) {
         --size;
     }
