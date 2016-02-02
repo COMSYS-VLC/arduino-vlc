@@ -1,20 +1,28 @@
 #include <avr/io.h>
-#include <util/delay.h>
-#include <avr/interrupt.h>
+#include <util/atomic.h>
 #include "SchrottPHY.hpp"
 #include "SchrottMAC.hpp"
 
+
+
 int main() {
+
     SchrottPHY phy;
     SchrottMAC mac(phy);
 
     sei();
 
-    mac.sendPayload((const uint8_t *) "A", 1);
-    mac.sendPayload((const uint8_t *) "A", 1);
-    mac.sendPayload((const uint8_t *) "A", 1);
-    while (1) {
+    /*mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
+    mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
+    mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
+    mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);*/
+
+    mac.sendPayload((const uint8_t*)"Hey", 3);
+    mac.sendPayload((const uint8_t*)"Hey", 3);
+    mac.sendPayload((const uint8_t*)"Hey", 3);
+    mac.sendPayload((const uint8_t*)"Hey", 3);
+
+    while(true) {
         phy.run();
-        //_delay_ms(5000);
     }
-}//190 239 1 65 186 237
+}

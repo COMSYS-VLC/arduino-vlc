@@ -19,31 +19,47 @@ public:
     virtual void run();
 
     // Internal interrupt methods
-    uint8_t synchronize();
-    uint8_t doSend();
-
+    void synchronize();
+    void doSend();
+    void detectEdge();
 private:
-    // Sensing
-    RingBuffer<uint16_t, 32> mAdcBuffer;
+    enum SyncState : uint8_t {
+        NoSync = 0,
+        HalfSync,
+        FullSync
+    };
+
+    enum EdgeType : uint8_t {
+        NoEdge = 0,
+        SyncUp,
+        SyncDown,
+        DataUp,
+        DataDown
+    };
+
+    // Sensing / Edge detection
     uint32_t mAdcSum;
+    uint32_t mAdcCount;
+    uint16_t mAdcAvg;
+    bool mLastSignal;
+    bool mEdgeDetected;
 
-    bool sense();
-
-    // Synchronisation
-    bool mNextIsFirst;
-    bool mFirstSample;
+    // Synchronisation / Reading
+    SyncState mSyncState;
+    EdgeType mNextEdge;
+    uint8_t mPeriodStep;
+    bool mIsData;
+    bool mDataValue;
     RingBuffer<bool, 1024> mSampleBuffer;
 
-    // Manchester Decoding
-    bool mLastSignal;
-    bool mDataEdge;
-
-    void decodeManchester(bool signal);
-
     // Sending
-    RingBuffer<uint8_t, 512> mFrameBuffer;
-    bool mSendNextIsFirst;
+    RingBuffer<uint8_t, 128> mFrameBuffer;
+    uint8_t mSendStep;
     uint8_t mSendBitOffset;
+
+    void resync();
+    void resetSend();
+    void clearSync();
 };
 
 
