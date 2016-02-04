@@ -12,15 +12,15 @@ int main() {
 
     sei();
 
-    /*mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
     mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
     mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
-    mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);*/
+    mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
+    mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
 
+    /*mac.sendPayload((const uint8_t*)"Hey", 3);
     mac.sendPayload((const uint8_t*)"Hey", 3);
     mac.sendPayload((const uint8_t*)"Hey", 3);
-    mac.sendPayload((const uint8_t*)"Hey", 3);
-    mac.sendPayload((const uint8_t*)"Hey", 3);
+    mac.sendPayload((const uint8_t*)"Hey", 3);*/
 
     while(true) {
         phy.run();

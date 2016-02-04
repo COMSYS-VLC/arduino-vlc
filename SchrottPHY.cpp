@@ -52,6 +52,8 @@ SchrottPHY::SchrottPHY() :
     CLEAR_BIT(PHYDDR_IN, PHYPIN_IN);
     CLEAR_BIT(PHYPORT_IN, PHYPIN_IN);
 
+    SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
+
     // Initialize Timer 0: 10 ms
     OCR0A = 77;
     TCCR0A = (1 << WGM01);
@@ -80,11 +82,12 @@ void SchrottPHY::sendPayload(const uint8_t* payload, uint16_t len) {
 }
 
 ISR(TIMER0_COMPA_vect) {
-        currentPHY->doSend();
+    currentPHY->doSend();
 }
 
 ISR(TIMER2_COMPA_vect) {
-        currentPHY->synchronize();
+    currentPHY->synchronize();
+    //TOGGLE_BIT(PHYPORT_OUT, PHYPIN_DBG);
 }
 
 ISR(ADC_vect) {
@@ -93,27 +96,29 @@ ISR(ADC_vect) {
 
 void SchrottPHY::resync() {
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        //UART::get() << mPeriodStep << '\n';
         mPeriodStep = 0;
         mEdgeDetected = true;
         mSyncState = NoSync;
         mNextEdge = SyncUp;
         TCNT2 = 0;
+        TCCR2B = (1 << CS22) | (1 << CS21);
     }
 }
 
 void SchrottPHY::resetSend() {
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-        mSendStep = 1;
+        mSendStep = 0;
         mSendBitOffset = 0;
         TCNT0 = 0;
-        SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
+        //SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
     }
 }
 
 void SchrottPHY::synchronize() {
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
         switch (mPeriodStep) {
-            case 3:
+            case 1:
                 mNextEdge = NoEdge;
                 if (!mEdgeDetected) {
                     clearSync();
@@ -121,13 +126,13 @@ void SchrottPHY::synchronize() {
                     mEdgeDetected = false;
                 }
                 break;
-            case 6:
+            case 5:
                 if (mSyncState == FullSync) {
                     mEdgeDetected = false;
                     mNextEdge = DataDown;
                 }
                 break;
-            case 10:
+            case 9:
                 if (mSyncState == FullSync) {
                     if (mEdgeDetected) {
                         mEdgeDetected = false;
@@ -138,7 +143,7 @@ void SchrottPHY::synchronize() {
                     }
                 }
                 break;
-            case 14:
+            case 13:
                 if (mSyncState == FullSync && mNextEdge == DataUp) {
                     if (mEdgeDetected) {
                         mIsData = true;
@@ -150,11 +155,11 @@ void SchrottPHY::synchronize() {
                 }
                 mEdgeDetected = false;
                 break;
-            case 18:
+            case 17:
                 mEdgeDetected = false;
                 mNextEdge = SyncDown;
                 break;
-            case 23:
+            case 21:
                 mNextEdge = NoEdge;
                 if (!mEdgeDetected) {
                     clearSync();
@@ -162,13 +167,13 @@ void SchrottPHY::synchronize() {
                     mEdgeDetected = false;
                 }
                 break;
-            case 26:
+            case 25:
                 if (mSyncState == FullSync && !mIsData) {
                     mEdgeDetected = false;
                     mNextEdge = DataUp;
                 }
                 break;
-            case 30:
+            case 29:
                 if (mSyncState == FullSync) {
                     if (mEdgeDetected) {
                         mNextEdge = DataDown;
@@ -178,7 +183,7 @@ void SchrottPHY::synchronize() {
                 }
                 mEdgeDetected = false;
                 break;
-            case 34:
+            case 33:
                 if (mSyncState == FullSync && mNextEdge == DataDown) {
                     if (mEdgeDetected) {
                         mIsData = true;
@@ -190,7 +195,7 @@ void SchrottPHY::synchronize() {
                 }
                 mEdgeDetected = false;
                 break;
-            case 38:
+            case 37:
                 mEdgeDetected = false;
                 mNextEdge = SyncUp;
                 break;
@@ -221,32 +226,34 @@ void SchrottPHY::run() {
 }
 
 void SchrottPHY::doSend() {
+    //TOGGLE_BIT(PHYPORT_OUT, PHYPIN_DBG);
+
     switch (mSendStep) {
-        case 0:
-            SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
+        case 1:
+            if(!mFrameBuffer.empty() && mFrameBuffer.at(0) & (128 >> mSendBitOffset)) {
+                CLEAR_BIT(PHYPORT_OUT, PHYPIN_OUT);
+            }
             break;
         case 2:
             if(!mFrameBuffer.empty() && mFrameBuffer.at(0) & (128 >> mSendBitOffset)) {
-                CLEAR_BIT(PHYPORT_OUT, PHYPIN_OUT);
-            }
-            break;
-        case 3:
-            if(!mFrameBuffer.empty() && mFrameBuffer.at(0) & (128 >> mSendBitOffset)) {
                 SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
             }
             break;
-        case 5:
+        case 4:
             CLEAR_BIT(PHYPORT_OUT, PHYPIN_OUT);
+            break;
+        case 6:
+            if(!mFrameBuffer.empty() && !(mFrameBuffer.at(0) & (128 >> mSendBitOffset))) {
+                SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
+            }
             break;
         case 7:
             if(!mFrameBuffer.empty() && !(mFrameBuffer.at(0) & (128 >> mSendBitOffset))) {
-                SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
-            }
-            break;
-        case 8:
-            if(!mFrameBuffer.empty() && !(mFrameBuffer.at(0) & (128 >> mSendBitOffset))) {
                 CLEAR_BIT(PHYPORT_OUT, PHYPIN_OUT);
             }
+            break;
+        case 9:
+            SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
             break;
         default:
             break;
@@ -266,11 +273,14 @@ void SchrottPHY::clearSync() {
         mSyncState = NoSync;
         mNextEdge = SyncUp;
         mEdgeDetected = false;
+        TCCR2B = 0;
+        TIFR2 = (1 << OCF2A);
+        TCNT2 = 0;
     }
 }
 
 void SchrottPHY::detectEdge() {
-#define AVERAGE_SAMPLES (512)
+#define AVERAGE_SAMPLES ((1 << 15))
 
     uint16_t value = ADCL;
     value |= ((uint16_t) ADCH) << 8;
@@ -318,6 +328,27 @@ void SchrottPHY::detectEdge() {
                             resetSend();
                         } else if (mSyncState == NoSync) {
                             resync();
+                        } else {
+                            if(0 != mSendStep) {
+                                if(!mFrameBuffer.empty() && 8 == ++mSendBitOffset) {
+                                    mSendBitOffset = 0;
+                                    mFrameBuffer.pop();
+                                }
+                                mSendStep = 0;
+                            }
+
+                            //mSendStep = 0;
+                            SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
+                            TCNT0 = 0;
+                            TIFR0 |= (1 << OCF0A);
+
+                            if(37 <= mPeriodStep && mIsData) {
+                                mSampleBuffer << mDataValue;
+                            }
+
+                            mPeriodStep = 0;
+                            TCNT2 = 0;
+                            TIFR2 |= (1 << OCF2A);
                         }
                     }
                     break;
