@@ -121,7 +121,6 @@ void SchrottMAC::handleBit(bool bit) {
             }
         }
     }
-
 }
 
 uint8_t SchrottMAC::frameByte(uint16_t offset) {
