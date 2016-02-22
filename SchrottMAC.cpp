@@ -15,7 +15,7 @@ SchrottMAC::SchrottMAC(PHY& phy) :
 }
 
 void SchrottMAC::sendPayload(const uint8_t* payload, uint8_t len) {
-    uint8_t frame[2 + 1 + len + 2];
+    uint8_t frame[2 + 1 + len + 1];
     uint8_t *cur = frame;
     *cur++ = 0xBE;
     *cur++ = 0xEF;
@@ -24,21 +24,19 @@ void SchrottMAC::sendPayload(const uint8_t* payload, uint8_t len) {
         *cur++ = payload[i];
     }
 
-    uint16_t crc = 0xFFFF;
+    uint8_t crc = 0x00;
     for(int i = 2; i < (3 + len); ++i) {
-        crc = _crc_ccitt_update(crc, frame[i]);
+        crc = _crc8_ccitt_update(crc, frame[i]);
     }
-
-    *cur++ = (crc >> 8) & 0xFF;
-    *cur = crc & 0xFF;
+    *cur++ = crc;
 
     UART::get() << "Frame: ";
-    for(int i = 0; i < 5 + len; ++i) {
+    for(int i = 0; i < 4 + len; ++i) {
         UART::get() << frame[i] << ' ';
     }
     UART::get() << '\n';
 
-    phy().sendPayload(frame, 5 + len);
+    phy().sendPayload(frame, 4 + len);
     //uint8_t data[] = { 0xE7, 0x39, 0xCE, 0x73, 0x9C, 0xE7, 0x39, 0xCE, 0x73, 0x9C };
     //uint8_t data[] = { 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8 };
     //phy().sendPayload(data, sizeof(data));
@@ -90,14 +88,13 @@ void SchrottMAC::handleBit(bool bit) {
         case WAIT_LENGTH:
             if (2 < fSize) {
                 uint8_t len = frameByte(2);
-                if (len + 5 <= fSize) {
+                if (len + 4 <= fSize) {
                     UART::get() << "Packet complete: " << fSize << " bytes \n";
-                    uint16_t crc = 0xFFFF;
+                    uint8_t crc = 0x00;
                     for (int i = 2; i < (len + 3); ++i) {
-                        crc = _crc_ccitt_update(crc, frameByte(i));
+                        crc = _crc8_ccitt_update(crc, frameByte(i));
                     }
-                    uint16_t crcPacket = ((uint16_t) frameByte(fSize - 2)) << 8;
-                    crcPacket |= frameByte(fSize - 1);
+                    uint8_t crcPacket = (uint8_t) frameByte(fSize - 1);
                     if (crc != crcPacket) {
                         UART::get() << "Packet dropped: CRC " << crcPacket << " vs. " << crc << '\n';
                         shiftFrame();
@@ -106,7 +103,7 @@ void SchrottMAC::handleBit(bool bit) {
                             UART::get() << (char)frameByte(i + 3);
                         }
                         UART::get() << '\n';
-                        for (uint16_t i = 0; i < len + 5; ++i) {
+                        for (uint16_t i = 0; i < len + 4; ++i) {
                             mFrame.pop();
                         }
                     }

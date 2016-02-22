@@ -13,5 +13,5 @@ print_board_list()
 set(ARDUINO_DEFAULT_BOARD mega)
 set(ARDUINO_DEFAULT_PORT /dev/ttyACM3)
 
-generate_avr_firmware(vlc1 SRCS main.cpp SchrottMAC.cpp SchrottPHY.cpp UART.cpp BOARD mega PORT /dev/ttyACM0)
-generate_avr_firmware(vlc2 SRCS main.cpp SchrottMAC.cpp SchrottPHY.cpp UART.cpp BOARD mega PORT /dev/ttyACM1)
+generate_avr_firmware(vlc1 SRCS main.cpp SchrottMAC.cpp SchrottPHY.cpp UART.cpp BOARD mega PORT /dev/ttyACM3)
+generate_avr_firmware(vlc2 SRCS main.cpp SchrottMAC.cpp SchrottPHY.cpp UART.cpp BOARD mega PORT /dev/ttyACM4)

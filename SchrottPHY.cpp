@@ -55,19 +55,20 @@ SchrottPHY::SchrottPHY() :
     SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
 
     // Initialize Timer 0: 10 ms
-    OCR0A = 77; // 10, 2,5
+    OCR0A = 24;
+    //OCR0A = 77; // 10, 2,5
     //OCR0A = 154; // 1,25 ms
     TCCR0A = (1 << WGM01);
     //TCCR0B = (1 << CS02) | (1 << CS00); // 10 ms
-    TCCR0B = (1 << CS02); // 2,5 ms
-    //TCCR0B = (1 << CS01) | (1 << CS00); // 0,625 ms
+    //TCCR0B = (1 << CS02); // 2,5 ms
+    TCCR0B = (1 << CS01) | (1 << CS00); // 0,625 ms
     TIMSK0 = (1 << OCIE0A);
 
     // Initialize Timer 2: 2.5 ms
-    OCR2A = 77;
+    //OCR2A = 77;
     TCCR2A = (1 << WGM21);
     //TCCR2B = (1 << CS22) | (1 << CS21); // 2,5 ms
-    TCCR2B = (1 << CS22); // 0,625 ms
+    //TCCR2B = (1 << CS22); // 0,625 ms
     //TCCR2B = (1 << CS21) | (1 << CS20); // 0,3125 ms
     TIMSK2 = (1 << OCIE2A);
 
@@ -75,7 +76,7 @@ SchrottPHY::SchrottPHY() :
     SET_BIT(DIDR0, ADC0D);
     // Start ADC.
     ADMUX |= (1 << REFS0);
-    ADCSRA |= (5 << ADPS0) | (1 << ADIE) | (1 << ADATE) | (1 << ADEN) | (1 << ADSC);
+    //ADCSRA |= (5 << ADPS0) | (1 << ADIE) | (1 << ADATE) | (1 << ADEN) | (1 << ADSC);
 }
 
 void SchrottPHY::sendPayload(const uint8_t* payload, uint16_t len) {
@@ -108,8 +109,8 @@ void SchrottPHY::resync() {
         mNextEdge = SyncUp;
         TCNT2 = 0;
         //TCCR2B = (1 << CS22) | (1 << CS21);
-        TCCR2B = (1 << CS22);
-        //TCCR2B = (1 << CS21) | (1 << CS20);
+        //TCCR2B = (1 << CS22);
+        TCCR2B = (1 << CS21) | (1 << CS20);
         TIFR2 |= (1 << OCF2A);
     }
 }
