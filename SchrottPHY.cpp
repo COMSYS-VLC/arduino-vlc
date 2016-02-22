@@ -7,6 +7,7 @@
 #include <util/delay.h>
 #include <util/atomic.h>
 #include <avr/interrupt.h>
+#include <signal.h>
 #include "UART.hpp"
 #include "MAC.hpp"
 
@@ -55,8 +56,8 @@ SchrottPHY::SchrottPHY() :
     SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
 
     // Initialize Timer 0: 10 ms
-    OCR0A = 24;
-    //OCR0A = 77; // 10, 2,5
+    //OCR0A = 24;
+    OCR0A = 77; // 10, 2,5
     //OCR0A = 154; // 1,25 ms
     TCCR0A = (1 << WGM01);
     //TCCR0B = (1 << CS02) | (1 << CS00); // 10 ms
@@ -66,11 +67,16 @@ SchrottPHY::SchrottPHY() :
 
     // Initialize Timer 2: 2.5 ms
     //OCR2A = 77;
+    OCR2A = 38;
     TCCR2A = (1 << WGM21);
     //TCCR2B = (1 << CS22) | (1 << CS21); // 2,5 ms
     //TCCR2B = (1 << CS22); // 0,625 ms
-    //TCCR2B = (1 << CS21) | (1 << CS20); // 0,3125 ms
+    TCCR2B = (1 << CS21) | (1 << CS20); // 0,3125 ms
     TIMSK2 = (1 << OCIE2A);
+
+    // edge detector
+    EIMSK = (1 << INT4);
+    EICRB = (1 << ISC40);
 
     // Disable input buffer on pin.
     SET_BIT(DIDR0, ADC0D);
@@ -93,6 +99,11 @@ ISR(TIMER0_COMPA_vect) {
 
 ISR(TIMER2_COMPA_vect) {
     currentPHY->synchronize();
+    //TOGGLE_BIT(PHYPORT_OUT, PHYPIN_DBG);
+}
+
+ISR(INT4_vect) {
+    currentPHY->onEdge();
     //TOGGLE_BIT(PHYPORT_OUT, PHYPIN_DBG);
 }
 
@@ -286,6 +297,80 @@ void SchrottPHY::clearSync() {
         TIFR2 = (1 << OCF2A);
         TCNT2 = 0;
     }
+}
+
+void SchrottPHY::onEdge() {
+    bool signal = PINE & (1 << PINE4);
+
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        switch (mNextEdge) {
+            case SyncDown:
+                if (signal) {
+                    resync();
+                } else {
+                    if (mSyncState != FullSync) {
+                        mSyncState = HalfSync;
+                    }
+                    mEdgeDetected = true;
+                }
+                break;
+            case SyncUp:
+                if (!signal) {
+                    clearSync();
+                } else {
+                    mEdgeDetected = true;
+                    if (mSyncState == HalfSync) {
+                        mSyncState = FullSync;
+                        resetSend();
+                    } else if (mSyncState == NoSync) {
+                        resync();
+                    } else {
+                        if(0 != mSendStep) {
+                            if(!mFrameBuffer.empty() && 8 == ++mSendBitOffset) {
+                                mSendBitOffset = 0;
+                                mFrameBuffer.pop();
+                            }
+                            mSendStep = 0;
+                        }
+
+                        //mSendStep = 0;
+                        SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
+                        TCNT0 = 0;
+                        TIFR0 |= (1 << OCF0A);
+
+                        if(37 <= mPeriodStep && mIsData) {
+                            mSampleBuffer << mDataValue;
+                        }
+
+                        mPeriodStep = 0;
+                        TCNT2 = 0;
+                        TIFR2 |= (1 << OCF2A);
+                    }
+                }
+                break;
+            case DataUp:
+                if (signal) {
+                    mEdgeDetected = true;
+                }
+                break;
+            case DataDown:
+                if (!signal) {
+                    mEdgeDetected = true;
+                }
+                break;
+            case NoEdge:
+                if (mSyncState == FullSync) {
+                    if (signal) {
+                        resync();
+                    } else {
+                        clearSync();
+                    }
+                }
+                break;
+        }
+    }
+
+    APPLY_BIT(PHYPORT_OUT, PHYPIN_DBG, mSyncState == FullSync);
 }
 
 void SchrottPHY::detectEdge() {

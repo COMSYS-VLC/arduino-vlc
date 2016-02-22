@@ -23,9 +23,8 @@
   <component name="ChangeListManager">
     <list default="true" id="2ec2da79-6be8-4efa-bde8-8d65620bb88b" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CMakeLists.txt" afterPath="$PROJECT_DIR$/CMakeLists.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/SchrottMAC.cpp" afterPath="$PROJECT_DIR$/SchrottMAC.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/SchrottPHY.cpp" afterPath="$PROJECT_DIR$/SchrottPHY.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/SchrottPHY.hpp" afterPath="$PROJECT_DIR$/SchrottPHY.hpp" />
     </list>
     <ignored path="arduino-vlc-receive.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -81,11 +80,9 @@
       <file leaf-file-name="SchrottPHY.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/SchrottPHY.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.2670157">
-              <caret line="57" column="14" selection-start-line="57" selection-start-column="14" selection-end-line="57" selection-end-column="14" />
-              <folding>
-                <element signature="e#38#63#0" expanded="true" />
-              </folding>
+            <state vertical-scroll-proportion="0.2748691">
+              <caret line="7" column="24" selection-start-line="7" selection-start-column="24" selection-end-line="7" selection-end-column="24" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -94,7 +91,7 @@
         <entry file="file://$PROJECT_DIR$/SchrottPHY.hpp">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="55" column="42" selection-start-line="55" selection-start-column="42" selection-end-line="55" selection-end-column="42" />
+              <caret line="23" column="18" selection-start-line="23" selection-start-column="18" selection-end-line="23" selection-end-column="18" />
               <folding>
                 <element signature="e#93#111#0" expanded="true" />
               </folding>
@@ -159,10 +156,10 @@
         <option value="$PROJECT_DIR$/PHY.hpp" />
         <option value="$PROJECT_DIR$/RingBuffer.hpp" />
         <option value="$PROJECT_DIR$/SchrottMAC.hpp" />
-        <option value="$PROJECT_DIR$/SchrottPHY.hpp" />
         <option value="$PROJECT_DIR$/main.cpp" />
         <option value="$PROJECT_DIR$/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/SchrottMAC.cpp" />
+        <option value="$PROJECT_DIR$/SchrottPHY.hpp" />
         <option value="$PROJECT_DIR$/SchrottPHY.cpp" />
       </list>
     </option>
@@ -346,21 +343,14 @@
     <MESSAGE value="initial commit" />
     <MESSAGE value="working PHY" />
     <MESSAGE value="different timings" />
-    <option name="LAST_COMMIT_MESSAGE" value="different timings" />
+    <MESSAGE value="8 bit crc" />
+    <option name="LAST_COMMIT_MESSAGE" value="8 bit crc" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/PHY.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="19" column="27" selection-start-line="19" selection-start-column="27" selection-end-line="19" selection-end-column="27" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/main.cpp">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -433,9 +423,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="178" column="9" selection-start-line="178" selection-start-column="9" selection-end-line="178" selection-end-column="9" />
-          <folding>
-            <element signature="e#38#63#0" expanded="true" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -511,9 +499,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#38#63#0" expanded="true" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -556,9 +542,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#38#63#0" expanded="true" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -678,13 +662,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file:///usr/avr/include/avr/iomxx0_1.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="1463" column="16" selection-start-line="1463" selection-start-column="8" selection-end-line="1463" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/UART.hpp">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.45385778">
@@ -697,16 +674,6 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="8" column="0" selection-start-line="8" selection-start-column="0" selection-end-line="8" selection-end-column="0" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/SchrottPHY.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="55" column="42" selection-start-line="55" selection-start-column="42" selection-end-line="55" selection-end-column="42" />
-          <folding>
-            <element signature="e#93#111#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -770,13 +737,37 @@
         </state>
       </provider>
     </entry>
+    <entry file="file:///usr/avr/include/avr/iomxx0_1.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="1340" column="20" selection-start-line="1340" selection-start-column="20" selection-end-line="1340" selection-end-column="20" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/SchrottPHY.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="23" column="18" selection-start-line="23" selection-start-column="18" selection-end-line="23" selection-end-column="18" />
+          <folding>
+            <element signature="e#93#111#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/avr/include/signal.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.25179857">
+          <caret line="7" column="20" selection-start-line="7" selection-start-column="20" selection-end-line="7" selection-end-column="20" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/SchrottPHY.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.2670157">
-          <caret line="57" column="14" selection-start-line="57" selection-start-column="14" selection-end-line="57" selection-end-column="14" />
-          <folding>
-            <element signature="e#38#63#0" expanded="true" />
-          </folding>
+        <state vertical-scroll-proportion="0.2748691">
+          <caret line="7" column="24" selection-start-line="7" selection-start-column="24" selection-end-line="7" selection-end-column="24" />
+          <folding />
         </state>
       </provider>
     </entry>

@@ -21,6 +21,7 @@ public:
     // Internal interrupt methods
     void synchronize();
     void doSend();
+    void onEdge();
     void detectEdge();
 private:
     enum SyncState : uint8_t {
