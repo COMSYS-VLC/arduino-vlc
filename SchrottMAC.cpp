@@ -89,14 +89,17 @@ void SchrottMAC::handleBit(bool bit) {
             if (2 < fSize) {
                 uint8_t len = frameByte(2);
                 if (len + 4 <= fSize) {
-                    UART::get() << "Packet complete: " << fSize << " bytes \n";
+                    UART::get() << "Packet complete: " << (len + 4) << " bytes \n";
                     uint8_t crc = 0x00;
                     for (int i = 2; i < (len + 3); ++i) {
                         crc = _crc8_ccitt_update(crc, frameByte(i));
                     }
-                    uint8_t crcPacket = (uint8_t) frameByte(fSize - 1);
+                    uint8_t crcPacket = (uint8_t) frameByte(len + 3);
                     if (crc != crcPacket) {
                         UART::get() << "Packet dropped: CRC " << crcPacket << " vs. " << crc << '\n';
+                        for (uint8_t i = 0; i < len; ++i) {
+                            UART::get() << (char)frameByte(i + 3);
+                        }
                         shiftFrame();
                     } else {
                         for (uint8_t i = 0; i < len; ++i) {
