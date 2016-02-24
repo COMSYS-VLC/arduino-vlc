@@ -23,11 +23,8 @@
   <component name="ChangeListManager">
     <list default="true" id="2ec2da79-6be8-4efa-bde8-8d65620bb88b" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/SchrottMAC.cpp" afterPath="$PROJECT_DIR$/SchrottMAC.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/SchrottMAC.hpp" afterPath="$PROJECT_DIR$/SchrottMAC.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/SchrottPHY.cpp" afterPath="$PROJECT_DIR$/SchrottPHY.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/SchrottPHY.hpp" afterPath="$PROJECT_DIR$/SchrottPHY.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main.cpp" afterPath="$PROJECT_DIR$/main.cpp" />
     </list>
     <ignored path="arduino-vlc-receive.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -70,11 +67,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="SchrottPHY.cpp" pinned="false" current-in-tab="true">
+      <file leaf-file-name="SchrottPHY.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/SchrottPHY.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="1.2949641">
-              <caret line="138" column="0" selection-start-line="138" selection-start-column="0" selection-end-line="138" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="10" column="18" selection-start-line="10" selection-start-column="18" selection-end-line="10" selection-end-column="18" />
               <folding>
                 <element signature="e#38#63#0" expanded="true" />
               </folding>
@@ -82,11 +79,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="SchrottPHY.hpp" pinned="false" current-in-tab="false">
+      <file leaf-file-name="SchrottPHY.hpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/SchrottPHY.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="55" column="18" selection-start-line="55" selection-start-column="18" selection-end-line="55" selection-end-column="18" />
+            <state vertical-scroll-proportion="0.46043167">
+              <caret line="39" column="42" selection-start-line="39" selection-start-column="42" selection-end-line="39" selection-end-column="42" />
               <folding>
                 <element signature="e#93#111#0" expanded="true" />
               </folding>
@@ -152,10 +149,10 @@
         <option value="$PROJECT_DIR$/RingBuffer.hpp" />
         <option value="$PROJECT_DIR$/main.cpp" />
         <option value="$PROJECT_DIR$/CMakeLists.txt" />
-        <option value="$PROJECT_DIR$/SchrottPHY.hpp" />
-        <option value="$PROJECT_DIR$/SchrottPHY.cpp" />
         <option value="$PROJECT_DIR$/SchrottMAC.hpp" />
         <option value="$PROJECT_DIR$/SchrottMAC.cpp" />
+        <option value="$PROJECT_DIR$/SchrottPHY.cpp" />
+        <option value="$PROJECT_DIR$/SchrottPHY.hpp" />
       </list>
     </option>
   </component>
@@ -359,7 +356,8 @@
     <MESSAGE value="different timings" />
     <MESSAGE value="8 bit crc" />
     <MESSAGE value="hardware edge detection" />
-    <option name="LAST_COMMIT_MESSAGE" value="hardware edge detection" />
+    <MESSAGE value="working 2kbit phy with many schrott" />
+    <option name="LAST_COMMIT_MESSAGE" value="working 2kbit phy with many schrott" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -677,6 +675,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -753,16 +752,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/SchrottPHY.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="55" column="18" selection-start-line="55" selection-start-column="18" selection-end-line="55" selection-end-column="18" />
-          <folding>
-            <element signature="e#93#111#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/SchrottMAC.hpp">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -783,10 +772,20 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/SchrottPHY.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="1.2949641">
-          <caret line="138" column="0" selection-start-line="138" selection-start-column="0" selection-end-line="138" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="10" column="18" selection-start-line="10" selection-start-column="18" selection-end-line="10" selection-end-column="18" />
           <folding>
             <element signature="e#38#63#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/SchrottPHY.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.46043167">
+          <caret line="39" column="42" selection-start-line="39" selection-start-column="42" selection-end-line="39" selection-end-column="42" />
+          <folding>
+            <element signature="e#93#111#0" expanded="true" />
           </folding>
         </state>
       </provider>
