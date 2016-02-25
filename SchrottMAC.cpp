@@ -15,38 +15,51 @@ SchrottMAC::SchrottMAC(PHY& phy) :
 }
 
 void SchrottMAC::sendPayload(const uint8_t* payload, uint8_t len) {
-    uint8_t frame[2 + 1 + len + 1];
+    uint8_t frame[2 + 2 + len + 1];
     uint8_t *cur = frame;
+
+    // Magic number
     *cur++ = 0xBE;
     *cur++ = 0xEF;
+
+    // Header fields
     *cur++ = len;
-    for(int i = 0; i < len; ++i) {
+
+    // Header checksum
+    uint8_t crc = 0x00;
+    for(uint8_t i = 0; i < 3; ++i) {
+        crc = _crc8_ccitt_update(crc, frame[i]);
+    }
+    *cur++ = crc;
+
+    // Payload
+    for(uint8_t i = 0; i < len; ++i) {
         *cur++ = payload[i];
     }
 
-    uint8_t crc = 0x00;
-    for(int i = 2; i < (3 + len); ++i) {
+    // (Header checksum + Payload) checksum
+    crc = 0x00;
+    for(uint8_t i = 3; i < (4 + len); ++i) {
         crc = _crc8_ccitt_update(crc, frame[i]);
     }
     *cur++ = crc;
 
     UART::get() << "Frame: ";
-    for(int i = 0; i < 4 + len; ++i) {
+    for(uint8_t i = 0; i < 5 + len; ++i) {
         UART::get() << frame[i] << ' ';
     }
     UART::get() << '\n';
 
-    phy().sendPayload(frame, 4 + len);
+    phy().setPayload(frame, 5 + len);
     //uint8_t data[] = { 0xE7, 0x39, 0xCE, 0x73, 0x9C, 0xE7, 0x39, 0xCE, 0x73, 0x9C };
     //uint8_t data[] = { 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8 };
     //phy().sendPayload(data, sizeof(data));
 }
 
 void SchrottMAC::handleBit(bool bit) {
+    //UART::get() << bit;
     if (bit) {
         mFrame.at(mFrame.size() - 1) |= (1 << mBitOffset);
-    } else {
-        mFrame.at(mFrame.size() - 1) &= ~(1 << mBitOffset);
     }
 
     if (0 == mBitOffset) {
@@ -73,6 +86,11 @@ void SchrottMAC::handleBit(bool bit) {
         case WAIT_EF:
             if (1 < fSize) {
                 if (0xEF != frameByte(1)) {
+                    UART::get() << fSize << ": ";
+                    for(uint8_t i = 0; i < fSize; ++i) {
+                        UART::get() << frameByte(i) << ' ';
+                    }
+                    UART::get() << '\n';
                     shiftFrame();
                     mState = WAIT_BE;
                     break;
@@ -86,34 +104,44 @@ void SchrottMAC::handleBit(bool bit) {
             }
 
         case WAIT_LENGTH:
-            if (2 < fSize) {
-                uint8_t len = frameByte(2);
-                if (len + 4 <= fSize) {
-                    UART::get() << "Packet complete: " << (len + 4) << " bytes \n";
-                    uint8_t crc = 0x00;
-                    for (int i = 2; i < (len + 3); ++i) {
-                        crc = _crc8_ccitt_update(crc, frameByte(i));
-                    }
-                    uint8_t crcPacket = (uint8_t) frameByte(len + 3);
-                    if (crc != crcPacket) {
-                        UART::get() << "Packet dropped: CRC " << crcPacket << " vs. " << crc << '\n';
-                        for (uint8_t i = 0; i < len; ++i) {
-                            UART::get() << (char)frameByte(i + 3);
-                        }
-                        shiftFrame();
-                    } else {
-                        for (uint8_t i = 0; i < len; ++i) {
-                            UART::get() << (char)frameByte(i + 3);
-                        }
-                        UART::get() << '\n';
-                        for (uint16_t i = 0; i < len + 4; ++i) {
-                            mFrame.pop();
-                        }
-                    }
+            if (3 < fSize) {
+                // Validate header checksum to ensure length correctness
+                uint8_t crcPacket = frameByte(3);
+                uint8_t crc = 0x00;
+                for (uint8_t i = 0; i < 3; ++i) {
+                    crc = _crc8_ccitt_update(crc, frameByte(i));
+                }
+                if(crc != crcPacket) {
+                    UART::get() << "Packet dropped: HCRC " << crcPacket << " vs. " << crc << '\n';
+                    shiftFrame();
                     mState = WAIT_BE;
                 } else {
-                    needMore = true;
-                    break;
+                    uint8_t len = frameByte(2);
+                    if (len + 5 <= fSize) {
+                        UART::get() << "Packet complete: " << (len + 5) << " bytes \n";
+                        // Validate (Header checksum + Payload) checksum
+                        crc = 0x00;
+                        for (uint8_t i = 3; i < (len + 4); ++i) {
+                            crc = _crc8_ccitt_update(crc, frameByte(i));
+                        }
+                        crcPacket = frameByte(len + 4);
+                        if (crc != crcPacket) {
+                            UART::get() << "Packet dropped: CRC " << crcPacket << " vs. " << crc << '\n';
+                            shiftFrame();
+                        } else {
+                            for (uint8_t i = 0; i < len; ++i) {
+                                UART::get() << (char) frameByte(i + 4);
+                            }
+                            UART::get() << '\n';
+                            for (uint8_t i = 0; i < len + 5; ++i) {
+                                mFrame.pop();
+                            }
+                        }
+                        mState = WAIT_BE;
+                    } else {
+                        needMore = true;
+                        break;
+                    }
                 }
             } else {
                 needMore = true;
@@ -123,7 +151,7 @@ void SchrottMAC::handleBit(bool bit) {
     }
 }
 
-uint8_t SchrottMAC::frameByte(uint16_t offset) {
+uint8_t SchrottMAC::frameByte(uint8_t offset) {
     uint8_t byte = mFrame.at(offset);
     if(0 != mFrameOffset) {
         byte <<= mFrameOffset;

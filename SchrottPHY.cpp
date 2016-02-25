@@ -4,11 +4,10 @@
 
 #include "SchrottPHY.hpp"
 #include <avr/io.h>
-#include <util/delay.h>
-#include <util/atomic.h>
 #include <avr/interrupt.h>
-#include "UART.hpp"
+#include <util/atomic.h>
 #include "MAC.hpp"
+#include "UART.hpp"
 
 #define SET_BIT(x, y) x |= _BV(y)
 #define CLEAR_BIT(x, y) x &= ~_BV(y)
@@ -29,14 +28,15 @@ static SchrottPHY* currentPHY = 0;
 SchrottPHY::SchrottPHY() :
     PHY(),
     mTimestep(0),
+    mSynchronizing(false),
     mSyncState(NoSync),
+    mNumEdges(0),
+    mSendBuffer(0),
     mSendStep(0),
-    mSendBitOffset(0),
     mHasData(false),
     mSendBitH(false),
     mSendBitL(false),
-    mSynchronizing(false),
-    mNumEdges(0)
+    mPause(0)
 {
     currentPHY = this;
 
@@ -52,7 +52,7 @@ SchrottPHY::SchrottPHY() :
     SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
 
     // Initialize Timer 4: 24 kHz
-    OCR4A = 666;
+    OCR4A = 1110;
     TCCR4B = (1 << CS40) | (1 << WGM42);
     TIMSK4 = (1 << OCIE4A);
 
@@ -61,17 +61,24 @@ SchrottPHY::SchrottPHY() :
     EICRB = (1 << ISC40);
 }
 
-void SchrottPHY::sendPayload(const uint8_t* payload, uint16_t len) {
+void SchrottPHY::setPayload(const uint8_t* payload, uint16_t len) {
+    Buffer *buf = !mSendBuffer ? &mSendBuffer1 : (mSendBuffer == &mSendBuffer1 ? &mSendBuffer2 : &mSendBuffer1);
+
     for (uint8_t i = 0; i < len; ++i) {
-        mFrameBuffer << payload[i];
+        buf->data[i] = payload[i];
     }
+    buf->len = len;
+    buf->offset = 0;
+    buf->bitOffset = 0;
+
+    mSendBuffer = buf;
 }
 
 ISR(TIMER4_COMPA_vect) {
     currentPHY->doSend();
 }
 
-ISR(INT4_vect) {
+ISR(INT4_vect, ISR_BLOCK) {
     bool signal = PINE & (1 << PINE4);
     currentPHY->onEdge(signal);
     //TOGGLE_BIT(PHYPORT_OUT, PHYPIN_DBG);
@@ -82,6 +89,7 @@ void SchrottPHY::sync(bool send) {
     mNumEdges = 0;
     if(send) {
         mSendStep = 1;
+        TOGGLE_BIT(PHYPORT_OUT, PHYPIN_DBG);
     }
     TCNT4 = 0;
     SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
@@ -94,9 +102,10 @@ void SchrottPHY::resync() {
 }
 
 void SchrottPHY::run() {
-    while(mSampleBuffer.size()) {
+    while (mSampleBuffer.size()) {
+        UART::get() << '\n' << mSampleBuffer.size() << '\n';
         uint8_t sample = mSampleBuffer.pop();
-        if(mac()) {
+        if (mac()) {
             mac()->handleBit(sample & 2);
             mac()->handleBit(sample & 1);
         }
@@ -106,7 +115,7 @@ void SchrottPHY::run() {
 void SchrottPHY::doSend() {
     //TOGGLE_BIT(PHYPORT_OUT, PHYPIN_DBG);
 
-    ++currentPHY->mTimestep;
+    ++mTimestep;
 
     switch (mSendStep) {
         case 0: // SyncUp
@@ -161,15 +170,35 @@ void SchrottPHY::doSend() {
 
     mSendStep = (mSendStep + 1) % 24;
     if(3 == mSendStep) {
-        if(mHasData && 8 == (mSendBitOffset += 2)) {
-            mSendBitOffset = 0;
-            mFrameBuffer.pop();
-        }
-        mHasData = !mFrameBuffer.empty();
         if(mHasData) {
-            uint8_t byte = mFrameBuffer.at(0);
-            mSendBitH = byte & (128 >> mSendBitOffset);
-            mSendBitL = byte & (64 >> mSendBitOffset);
+            mSendBuffer->bitOffset += 2;
+            if(8 == mSendBuffer->bitOffset) {
+                mSendBuffer->bitOffset = 0;
+                mSendBuffer->offset = (mSendBuffer->offset + 1) % mSendBuffer->len;
+            }
+        }
+        if(mPause < 20) {
+            mHasData = mSendBuffer;
+            ++mPause;
+        } else {
+            if(mPause > 25) {
+                mPause = 0;
+            } else {
+                ++mPause;
+            }
+            mHasData = false;
+        }
+        if(mHasData) {
+            uint8_t byte = mSendBuffer->data[mSendBuffer->offset];
+            static bool toggle = false;
+            if(toggle) {
+                mSendBitH = true;//byte & (128 >> mSendBuffer->bitOffset);
+                mSendBitL = false;//byte & (64 >> mSendBuffer->bitOffset);
+            } else {
+                mSendBitH = false;//byte & (128 >> mSendBuffer->bitOffset);
+                mSendBitL = true;//byte & (64 >> mSendBuffer->bitOffset);
+            }
+            toggle = !toggle;
         }
     }
 }
@@ -244,7 +273,7 @@ void SchrottPHY::onEdge(bool signal) {
                     resync();
                 }
             }
-        } else if (now > 30) {
+        } else if (now > 25) {
             // NO SYNC!
             if (signal) {
                 resync();
@@ -263,6 +292,6 @@ void SchrottPHY::onEdge(bool signal) {
         }
     }
 
-    APPLY_BIT(PHYPORT_OUT, PHYPIN_DBG, mSyncState == FullSync);
+    //APPLY_BIT(PHYPORT_OUT, PHYPIN_DBG, mSyncState == FullSync);
 }
 

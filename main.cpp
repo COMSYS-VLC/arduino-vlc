@@ -12,19 +12,9 @@ int main() {
 
     sei();
 
-    mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
-    mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
-    mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
-    mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
-    mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
-    mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
-    mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
-    mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
+    //mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
 
-    /*mac.sendPayload((const uint8_t*)"Hey", 3);
     mac.sendPayload((const uint8_t*)"Hey", 3);
-    mac.sendPayload((const uint8_t*)"Hey", 3);
-    mac.sendPayload((const uint8_t*)"Hey", 3);*/
 
     DDRE = (1 << DDE3) | (1 << DDE5);
     DDRG = (1 << DDG5);

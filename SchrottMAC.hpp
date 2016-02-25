@@ -22,12 +22,12 @@ private:
         WAIT_LENGTH
     };
 
-    RingBuffer<uint8_t, 512> mFrame;
+    RingBuffer<uint8_t, 260> mFrame;
     uint8_t mBitOffset;
     uint8_t mFrameOffset;
     ParseState mState;
 
-    uint8_t frameByte(uint16_t offset);
+    uint8_t frameByte(uint8_t offset);
     void shiftFrame();
     uint16_t frameSize();
 };
