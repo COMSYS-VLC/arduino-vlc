@@ -11,7 +11,9 @@ class MAC {
 public:
     MAC(PHY& phy) : mPhy(phy) {}
 
-    virtual void sendPayload(const uint8_t* payload, uint8_t len) = 0;
+    virtual uint8_t sendPayload(const uint8_t* payload, uint8_t len) = 0;
+    virtual void cancelPayload(uint8_t id) = 0;
+
     virtual void handleBit(bool bit) = 0;
 
     PHY& phy() const { return mPhy; }

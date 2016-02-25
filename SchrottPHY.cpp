@@ -25,6 +25,16 @@
 
 static SchrottPHY* currentPHY = 0;
 
+ISR(TIMER4_COMPA_vect) {
+    currentPHY->doSend();
+}
+
+ISR(INT4_vect, ISR_BLOCK) {
+    bool signal = PINE & (1 << PINE4);
+    currentPHY->onEdge(signal);
+    //TOGGLE_BIT(PHYPORT_OUT, PHYPIN_DBG);
+}
+
 SchrottPHY::SchrottPHY() :
     PHY(),
     mTimestep(0),
@@ -32,6 +42,7 @@ SchrottPHY::SchrottPHY() :
     mSyncState(NoSync),
     mNumEdges(0),
     mSendBuffer(0),
+    mNextSendBuffer(0),
     mSendStep(0),
     mHasData(false),
     mSendBitH(false),
@@ -62,7 +73,8 @@ SchrottPHY::SchrottPHY() :
 }
 
 void SchrottPHY::setPayload(const uint8_t* payload, uint16_t len) {
-    Buffer *buf = !mSendBuffer ? &mSendBuffer1 : (mSendBuffer == &mSendBuffer1 ? &mSendBuffer2 : &mSendBuffer1);
+    Buffer *buf = !mNextSendBuffer ? &mNextSendBuffer :
+                  (mNextSendBuffer == &mSendBuffer1 ? &mSendBuffer2 : &mSendBuffer1);
 
     for (uint8_t i = 0; i < len; ++i) {
         buf->data[i] = payload[i];
@@ -71,17 +83,11 @@ void SchrottPHY::setPayload(const uint8_t* payload, uint16_t len) {
     buf->offset = 0;
     buf->bitOffset = 0;
 
-    mSendBuffer = buf;
+    mNextSendBuffer = buf;
 }
 
-ISR(TIMER4_COMPA_vect) {
-    currentPHY->doSend();
-}
-
-ISR(INT4_vect, ISR_BLOCK) {
-    bool signal = PINE & (1 << PINE4);
-    currentPHY->onEdge(signal);
-    //TOGGLE_BIT(PHYPORT_OUT, PHYPIN_DBG);
+void SchrottPHY::clearPayload() {
+    mNextSendBuffer = 0;
 }
 
 void SchrottPHY::sync(bool send) {
@@ -168,37 +174,28 @@ void SchrottPHY::doSend() {
             break;
     }
 
-    mSendStep = (mSendStep + 1) % 24;
+    ++mSendStep;
+    if(24 == mSendStep) {
+        mSendStep = 0;
+    }
     if(3 == mSendStep) {
-        if(mHasData) {
+        if(mNextSendBuffer != mSendBuffer) {
+            mSendBuffer = mNextSendBuffer;
+        } else if(mHasData) {
             mSendBuffer->bitOffset += 2;
             if(8 == mSendBuffer->bitOffset) {
                 mSendBuffer->bitOffset = 0;
-                mSendBuffer->offset = (mSendBuffer->offset + 1) % mSendBuffer->len;
+                ++mSendBuffer->offset;
+                if(mSendBuffer->offset == mSendBuffer->len) {
+                    mSendBuffer->offset = 0;
+                }
             }
         }
-        if(mPause < 20) {
-            mHasData = mSendBuffer;
-            ++mPause;
-        } else {
-            if(mPause > 25) {
-                mPause = 0;
-            } else {
-                ++mPause;
-            }
-            mHasData = false;
-        }
+        mHasData = mSendBuffer;
         if(mHasData) {
             uint8_t byte = mSendBuffer->data[mSendBuffer->offset];
-            static bool toggle = false;
-            if(toggle) {
-                mSendBitH = true;//byte & (128 >> mSendBuffer->bitOffset);
-                mSendBitL = false;//byte & (64 >> mSendBuffer->bitOffset);
-            } else {
-                mSendBitH = false;//byte & (128 >> mSendBuffer->bitOffset);
-                mSendBitL = true;//byte & (64 >> mSendBuffer->bitOffset);
-            }
-            toggle = !toggle;
+            mSendBitH = byte & (128 >> mSendBuffer->bitOffset);
+            mSendBitL = byte & (64 >> mSendBuffer->bitOffset);
         }
     }
 }

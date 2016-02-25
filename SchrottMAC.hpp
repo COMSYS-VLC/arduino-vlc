@@ -12,7 +12,9 @@ class SchrottMAC : public MAC {
 public:
     SchrottMAC(PHY& phy);
 
-    virtual void sendPayload(const uint8_t* payload, uint8_t len);
+    virtual uint8_t sendPayload(const uint8_t* payload, uint8_t len);
+    virtual void cancelPayload(uint8_t id);
+
     virtual void handleBit(bool bit);
 
 private:
@@ -22,14 +24,29 @@ private:
         WAIT_LENGTH
     };
 
-    RingBuffer<uint8_t, 260> mFrame;
+    RingBuffer<uint8_t, 63> mFrame;
     uint8_t mBitOffset;
     uint8_t mFrameOffset;
     ParseState mState;
 
+    struct Payload {
+        bool used;
+        uint8_t len;
+        uint8_t data[31];
+    };
+    Payload mPayloads[5];
+    uint8_t mPayloadId;
+    bool mAckId;
+    bool mSendAck;
+    bool mSendAckId;
+
     uint8_t frameByte(uint8_t offset);
     void shiftFrame();
     uint16_t frameSize();
+
+    void handleFlags(uint8_t flags, bool doAck);
+    void scheduleNext();
+    void setPayload();
 };
 
 

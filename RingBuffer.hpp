@@ -7,19 +7,16 @@
 
 #include <stdint.h>
 
-template<typename T, uint16_t SIZE>
+template<typename T, uint8_t SIZE>
 class RingBuffer {
 public:
     RingBuffer() : mRead(0), mWrite(0) {}
 
-    const T at(uint16_t index) const {
-        if(!validIndex(index)) {
-            return T();
-        }
+    const T at(uint8_t index) const {
         return mBuffer[(mRead + index) % (SIZE + 1)];
     }
 
-    T& at(uint16_t index) {
+    T& at(uint8_t index) {
         return mBuffer[(mRead + index) % (SIZE + 1)];
     }
 
@@ -27,11 +24,11 @@ public:
         return mRead == mWrite;
     }
 
-    uint16_t size() const {
-        return (SIZE + 1 + mWrite - mRead) % (SIZE + 1);
+    uint8_t size() const {
+        return ((uint8_t)(((uint16_t)mWrite) + SIZE + 1 - mRead)) % (SIZE + 1);
     }
 
-    uint16_t capacity() const {
+    uint8_t capacity() const {
         return SIZE;
     }
 
@@ -63,14 +60,9 @@ public:
     }
 
 private:
-    bool validIndex(uint16_t index) const {
-        return index < size();
-    }
-
     T mBuffer[SIZE + 1];
-    uint16_t mRead;
-    uint16_t mWrite;
+    uint8_t mRead;
+    uint8_t mWrite;
 };
-
 
 #endif //VLC_RINGBUFFER_HPP

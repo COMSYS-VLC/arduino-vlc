@@ -15,6 +15,7 @@ public:
     SchrottPHY();
 
     virtual void setPayload(const uint8_t* payload, uint16_t len);
+    virtual void clearPayload();
 
     virtual void run();
 
@@ -34,11 +35,11 @@ private:
     SyncState mSyncState;
     uint8_t mNumEdges;
     uint8_t mEdgeTimes[10];
-    RingBuffer<uint8_t, 1024> mSampleBuffer;
+    RingBuffer<uint8_t, 127> mSampleBuffer;
 
     // Sending
     struct Buffer {
-        uint8_t data[128];
+        uint8_t data[40];
         uint8_t len;
         uint8_t offset;
         uint8_t bitOffset;
@@ -46,6 +47,7 @@ private:
     Buffer mSendBuffer1;
     Buffer mSendBuffer2;
     Buffer *mSendBuffer;
+    Buffer *mNextSendBuffer;
     uint8_t mSendStep;
     bool mHasData;
     bool mSendBitH;

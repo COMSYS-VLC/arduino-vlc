@@ -16,6 +16,7 @@ public:
     }
 
     virtual void setPayload(const uint8_t* payload, uint16_t len) = 0;
+    virtual void clearPayload() = 0;
 
     virtual void run() = 0;
 

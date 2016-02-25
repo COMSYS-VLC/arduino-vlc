@@ -7,53 +7,55 @@
 #include <util/crc16.h>
 
 SchrottMAC::SchrottMAC(PHY& phy) :
-        MAC(phy), mBitOffset(7), mFrameOffset(0), mState(WAIT_BE)
+        MAC(phy), mBitOffset(7), mFrameOffset(0), mState(WAIT_BE),
+        mPayloadId(0), mAckId(false), mSendAck(false), mSendAckId(false)
 {
     mFrame << 0;
 
     phy.registerMAC(this);
 }
 
-void SchrottMAC::sendPayload(const uint8_t* payload, uint8_t len) {
-    uint8_t frame[2 + 2 + len + 1];
-    uint8_t *cur = frame;
-
-    // Magic number
-    *cur++ = 0xBE;
-    *cur++ = 0xEF;
-
-    // Header fields
-    *cur++ = len;
-
-    // Header checksum
-    uint8_t crc = 0x00;
-    for(uint8_t i = 0; i < 3; ++i) {
-        crc = _crc8_ccitt_update(crc, frame[i]);
+uint8_t SchrottMAC::sendPayload(const uint8_t* payload, uint8_t len) {
+    if(0 == len || 31 < len) {
+        return 0xFE;
     }
-    *cur++ = crc;
 
-    // Payload
+    // Find free payload slot
+    uint8_t id = (mPayloadId + 1) % 5;
+    for(uint8_t i = 0; i < 5; ++i) {
+        if(!mPayloads[id].used) {
+            break;
+        }
+        id = (id + 1) % 5;
+    }
+    if(mPayloads[id].used) {
+        return 0xFF;
+    }
+
+
+    mPayloads[id].len = len;
     for(uint8_t i = 0; i < len; ++i) {
-        *cur++ = payload[i];
+        mPayloads[id].data[i] = payload[i];
     }
 
-    // (Header checksum + Payload) checksum
-    crc = 0x00;
-    for(uint8_t i = 3; i < (4 + len); ++i) {
-        crc = _crc8_ccitt_update(crc, frame[i]);
+    if(!mPayloads[mPayloadId].used) {
+        mPayloads[id].used = true;
+        scheduleNext();
+    } else {
+        mPayloads[id].used = true;
     }
-    *cur++ = crc;
 
-    UART::get() << "Frame: ";
-    for(uint8_t i = 0; i < 5 + len; ++i) {
-        UART::get() << frame[i] << ' ';
+    return id;
+}
+
+void SchrottMAC::cancelPayload(uint8_t id) {
+    if(5 < id) {
+        return;
     }
-    UART::get() << '\n';
-
-    phy().setPayload(frame, 5 + len);
-    //uint8_t data[] = { 0xE7, 0x39, 0xCE, 0x73, 0x9C, 0xE7, 0x39, 0xCE, 0x73, 0x9C };
-    //uint8_t data[] = { 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8 };
-    //phy().sendPayload(data, sizeof(data));
+    mPayloads[id].used = false;
+    if(mPayloadId == id) {
+        scheduleNext();
+    }
 }
 
 void SchrottMAC::handleBit(bool bit) {
@@ -116,37 +118,44 @@ void SchrottMAC::handleBit(bool bit) {
                     shiftFrame();
                     mState = WAIT_BE;
                 } else {
-                    uint8_t len = frameByte(2);
-                    if (len + 5 <= fSize) {
-                        UART::get() << "Packet complete: " << (len + 5) << " bytes \n";
-                        // Validate (Header checksum + Payload) checksum
-                        crc = 0x00;
-                        for (uint8_t i = 3; i < (len + 4); ++i) {
-                            crc = _crc8_ccitt_update(crc, frameByte(i));
-                        }
-                        crcPacket = frameByte(len + 4);
-                        if (crc != crcPacket) {
-                            UART::get() << "Packet dropped: CRC " << crcPacket << " vs. " << crc << '\n';
-                            shiftFrame();
-                        } else {
-                            for (uint8_t i = 0; i < len; ++i) {
-                                UART::get() << (char) frameByte(i + 4);
+                    uint8_t len = frameByte(2) & 0x1F;
+                    if(0 == len || len + 5 <= fSize) {
+                        handleFlags(frameByte(2), 0 != len);
+                        if(0 != len) {
+                            UART::get() << "Packet complete: " << (len + 5) << " bytes \n";
+                            // Validate (Header checksum + Payload) checksum
+                            crc = 0x00;
+                            for (uint8_t i = 3; i < (len + 4); ++i) {
+                                crc = _crc8_ccitt_update(crc, frameByte(i));
                             }
-                            UART::get() << '\n';
-                            for (uint8_t i = 0; i < len + 5; ++i) {
+                            crcPacket = frameByte(len + 4);
+                            if (crc != crcPacket) {
+                                UART::get() << "Packet dropped: CRC " << crcPacket << " vs. " << crc << '\n';
+                                shiftFrame();
+                            } else {
+                                for (uint8_t i = 0; i < len; ++i) {
+                                    UART::get() << (char) frameByte(i + 4);
+                                }
+                                UART::get() << '\n';
+                                for (uint8_t i = 0; i < len + 5; ++i) {
+                                    mFrame.pop();
+                                }
+                            }
+                        } else {
+                            UART::get() << "Packet complete: 4 bytes \n";
+                            for (uint8_t i = 0; i < 4; ++i) {
                                 mFrame.pop();
                             }
                         }
                         mState = WAIT_BE;
                     } else {
                         needMore = true;
-                        break;
                     }
                 }
             } else {
                 needMore = true;
-                break;
             }
+            break;
         }
     }
 }
@@ -174,4 +183,113 @@ uint16_t SchrottMAC::frameSize() {
         --size;
     }
     return size;
+}
+
+void SchrottMAC::handleFlags(uint8_t flags, bool doAck) {
+    bool update = false;
+
+    if(mSendAck != doAck) {
+        update = true;
+        mSendAck = doAck;
+    }
+
+    bool sackId = flags & (1 << 7);
+    if(mSendAck && mSendAckId != sackId) {
+        update = true;
+        mSendAckId = sackId;
+    }
+
+    if(flags & (1 << 6)) { // acking
+        bool ackId = flags & (1 << 5);
+        if(mAckId == ackId && mPayloads[mPayloadId].used) {
+            mPayloads[mPayloadId].used = false;
+            scheduleNext();
+            update = false;
+        }
+    }
+
+    if(update) {
+        setPayload();
+    }
+}
+
+void SchrottMAC::scheduleNext() {
+    // Find used payload slot
+    uint8_t id = (mPayloadId + 1) % 5;
+    for(uint8_t i = 0; i < 5; ++i) {
+        if(mPayloads[id].used) {
+            break;
+        }
+        id = (id + 1) % 5;
+    }
+    if(mPayloads[id].used) {
+        mAckId = !mAckId;
+    }
+    mPayloadId = id;
+    setPayload();
+}
+
+void SchrottMAC::setPayload() {
+    if(!mSendAck && !mPayloads[mPayloadId].used) {
+        phy().clearPayload();
+        return;
+    }
+
+    uint8_t len = mPayloads[mPayloadId].used ? mPayloads[mPayloadId].len : 0;
+    uint8_t frame[2 + 2 + len + 1];
+    uint8_t *cur = frame;
+
+    // Magic number
+    *cur++ = 0xBE;
+    *cur++ = 0xEF;
+
+    // Header fields
+    uint8_t flaglen = len;
+    if(mSendAck) {
+        flaglen |= (1 << 6);
+        if(mSendAckId) {
+            flaglen |= (1 << 5);
+        }
+    }
+    if(mAckId && 0 < len) {
+        flaglen |= (1 << 7);
+    }
+    *cur++ = flaglen;
+
+    // Header checksum
+    uint8_t crc = 0x00;
+    for(uint8_t i = 0; i < 3; ++i) {
+        crc = _crc8_ccitt_update(crc, frame[i]);
+    }
+    *cur++ = crc;
+
+    if(0 < len) {
+        // Payload
+        for (uint8_t i = 0; i < len; ++i) {
+            *cur++ = payload[i];
+        }
+
+        // (Header checksum + Payload) checksum
+        crc = 0x00;
+        for (uint8_t i = 3; i < (4 + len); ++i) {
+            crc = _crc8_ccitt_update(crc, frame[i]);
+        }
+        *cur++ = crc;
+
+        UART::get() << "Frame: ";
+        for (uint8_t i = 0; i < 5 + len; ++i) {
+            UART::get() << frame[i] << ' ';
+        }
+        UART::get() << '\n';
+
+        phy().setPayload(frame, 5 + len);
+    } else {
+        UART::get() << "Frame: ";
+        for (uint8_t i = 0; i < 4; ++i) {
+            UART::get() << frame[i] << ' ';
+        }
+        UART::get() << '\n';
+
+        phy().setPayload(frame, 4);
+    }
 }
