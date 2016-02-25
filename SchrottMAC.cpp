@@ -71,7 +71,7 @@ void SchrottMAC::handleBit(bool bit) {
         --mBitOffset;
     }
 
-    uint16_t fSize;
+    uint8_t fSize;
     bool needMore = false;
 
     while((fSize = frameSize()) && !needMore) {
@@ -88,11 +88,6 @@ void SchrottMAC::handleBit(bool bit) {
         case WAIT_EF:
             if (1 < fSize) {
                 if (0xEF != frameByte(1)) {
-                    UART::get() << fSize << ": ";
-                    for(uint8_t i = 0; i < fSize; ++i) {
-                        UART::get() << frameByte(i) << ' ';
-                    }
-                    UART::get() << '\n';
                     shiftFrame();
                     mState = WAIT_BE;
                     break;
@@ -177,8 +172,8 @@ void SchrottMAC::shiftFrame() {
     }
 }
 
-uint16_t SchrottMAC::frameSize() {
-    uint16_t size = mFrame.size() - 1;
+uint8_t SchrottMAC::frameSize() {
+    uint8_t size = mFrame.size() - 1;
     if(mFrameOffset > (7 - mBitOffset)) {
         --size;
     }

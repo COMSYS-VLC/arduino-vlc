@@ -42,7 +42,7 @@ private:
 
     uint8_t frameByte(uint8_t offset);
     void shiftFrame();
-    uint16_t frameSize();
+    uint8_t frameSize();
 
     void handleFlags(uint8_t flags, bool doAck);
     void scheduleNext();
