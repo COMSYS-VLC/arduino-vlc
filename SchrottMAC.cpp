@@ -261,7 +261,7 @@ void SchrottMAC::setPayload() {
     if(0 < len) {
         // Payload
         for (uint8_t i = 0; i < len; ++i) {
-            *cur++ = payload[i];
+            *cur++ = mPayloads[mPayloadId].data[i];
         }
 
         // (Header checksum + Payload) checksum

@@ -72,7 +72,7 @@ SchrottPHY::SchrottPHY() :
 }
 
 void SchrottPHY::setPayload(const uint8_t* payload, uint16_t len) {
-    Buffer *buf = !mNextSendBuffer ? &mNextSendBuffer :
+    Buffer *buf = !mNextSendBuffer ? mNextSendBuffer :
                   (mNextSendBuffer == &mSendBuffer1 ? &mSendBuffer2 : &mSendBuffer1);
 
     for (uint8_t i = 0; i < len; ++i) {
