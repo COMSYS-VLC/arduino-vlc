@@ -46,8 +46,7 @@ SchrottPHY::SchrottPHY() :
     mSendStep(0),
     mHasData(false),
     mSendBitH(false),
-    mSendBitL(false),
-    mPause(0)
+    mSendBitL(false)
 {
     currentPHY = this;
 

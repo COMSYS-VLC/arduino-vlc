@@ -52,7 +52,6 @@ private:
     bool mHasData;
     bool mSendBitH;
     bool mSendBitL;
-    uint8_t mPause;
 
     void resync();
     void sync(bool send);
