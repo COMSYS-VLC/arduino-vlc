@@ -15,6 +15,7 @@ public:
     virtual uint8_t sendPayload(const uint8_t* payload, uint8_t len);
     virtual void cancelPayload(uint8_t id);
 
+protected:
     virtual void handleBit(bool bit);
 
 private:

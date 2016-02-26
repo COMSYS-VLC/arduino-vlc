@@ -110,10 +110,8 @@ void SchrottPHY::run() {
     while (mSampleBuffer.size()) {
         UART::get() << '\n' << mSampleBuffer.size() << '\n';
         uint8_t sample = mSampleBuffer.pop();
-        if (mac()) {
-            mac()->handleBit(sample & 2);
-            mac()->handleBit(sample & 1);
-        }
+        callBitHandler(sample & 2);
+        callBitHandler(sample & 1);
     }
 }
 

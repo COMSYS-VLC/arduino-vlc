@@ -11,8 +11,6 @@ SchrottMAC::SchrottMAC(PHY& phy) :
         mPayloadId(0), mAckId(false), mSendAck(false), mSendAckId(false)
 {
     mFrame << 0;
-
-    phy.registerMAC(this);
 }
 
 uint8_t SchrottMAC::sendPayload(const uint8_t* payload, uint8_t len) {
@@ -119,9 +117,11 @@ void SchrottMAC::handleBit(bool bit) {
                         if(0 != len) {
                             UART::get() << "Packet complete: " << (len + 5) << " bytes \n";
                             // Validate (Header checksum + Payload) checksum
-                            crc = 0x00;
-                            for (uint8_t i = 3; i < (len + 4); ++i) {
-                                crc = _crc8_ccitt_update(crc, frameByte(i));
+                            crc = _crc8_ccitt_update(0x00, frameByte(3));
+                            uint8_t payload[len];
+                            for (uint8_t i = 4, j = 0; i < (len + 4); ++i, ++j) {
+                                payload[j] = frameByte(i);
+                                crc = _crc8_ccitt_update(crc, payload[j]);
                             }
                             crcPacket = frameByte(len + 4);
                             if (crc != crcPacket) {
@@ -129,9 +129,10 @@ void SchrottMAC::handleBit(bool bit) {
                                 shiftFrame();
                             } else {
                                 for (uint8_t i = 0; i < len; ++i) {
-                                    UART::get() << (char) frameByte(i + 4);
+                                    UART::get() << (char) payload[i];
                                 }
                                 UART::get() << '\n';
+                                callPayloadHandler(payload, len);
                                 for (uint8_t i = 0; i < len + 5; ++i) {
                                     mFrame.pop();
                                 }

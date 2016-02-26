@@ -7,11 +7,11 @@
 
 #include <stdint.h>
 
-class MAC;
-
 class PHY {
 public:
-    PHY() : mMAC(0) {
+    typedef void (*bitHandlerCallback)(bool, void*);
+
+    PHY() : mCallback(0), mCallbackData(0) {
 
     }
 
@@ -20,16 +20,21 @@ public:
 
     virtual void run() = 0;
 
-    void registerMAC(MAC* mac) {
-        mMAC = mac;
-    };
+    void setBitHandler(bitHandlerCallback callback, void* data) {
+        mCallback = callback;
+        mCallbackData = data;
+    }
 
-    MAC* mac() {
-        return mMAC;
+protected:
+    void callBitHandler(bool bit) {
+        if(mCallback) {
+            mCallback(bit, mCallbackData);
+        }
     }
 
 private:
-    MAC* mMAC;
+    bitHandlerCallback mCallback;
+    void* mCallbackData;
 };
 
 #endif //VLC_PHY_HPP
