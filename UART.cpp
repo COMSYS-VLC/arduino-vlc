@@ -27,7 +27,7 @@ UART& UART::operator<<(uint8_t value) {
         send('0');
         return *this;
     }
-    char buf[10];
+    char buf[3];
     char *cur = buf;
     while(value > 0) {
         *cur++ = '0' + (value % 10);
@@ -35,7 +35,7 @@ UART& UART::operator<<(uint8_t value) {
     }
     --cur;
     while(cur >= buf) {
-        send(*cur--);
+        send(static_cast<uint8_t>(*cur--));
     }
     return *this;
 }
@@ -45,7 +45,7 @@ UART& UART::operator<<(uint16_t value) {
         send('0');
         return *this;
     }
-    char buf[10];
+    char buf[5];
     char *cur = buf;
     while(value > 0) {
         *cur++ = '0' + (value % 10);
@@ -53,7 +53,7 @@ UART& UART::operator<<(uint16_t value) {
     }
     --cur;
     while(cur >= buf) {
-        send(*cur--);
+        send(static_cast<uint8_t>(*cur--));
     }
     return *this;
 }
@@ -71,18 +71,18 @@ UART& UART::operator<<(uint32_t value) {
     }
     --cur;
     while(cur >= buf) {
-        send(*cur--);
+        send(static_cast<uint8_t>(*cur--));
     }
     return *this;
 }
 
 UART& UART::operator<<(char c) {
-    send(c);
+    send(static_cast<uint8_t>(c));
     return *this;
 }
 
 UART& UART::operator<<(const char* str) {
     while(*str) {
-        send(*str++);
+        send(static_cast<uint8_t>(*str++));
     }
 }

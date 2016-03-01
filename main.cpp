@@ -4,17 +4,21 @@
 #include "SchrottPHY.hpp"
 #include "SchrottMAC.hpp"
 #include "MotorController.hpp"
+#include "UART.hpp"
 
 int main() {
+    cli();
     SchrottPHY phy;
     SchrottMAC mac(phy);
     MotorController motor;
 
-    sei();
+    //sei();
 
     //mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
 
-    mac.sendPayload((const uint8_t*)"Hey", 3);
+    if(mac.sendPayload((const uint8_t*)"Hey", 3) == 0xFF) {
+        UART::get() << "Send error\n";
+    }
 
     motor.forward();
 

@@ -25,16 +25,6 @@
 
 static SchrottPHY* currentPHY = 0;
 
-ISR(TIMER4_COMPA_vect) {
-    currentPHY->doSend();
-}
-
-ISR(INT4_vect, ISR_BLOCK) {
-    bool signal = PINE & (1 << PINE4);
-    currentPHY->onEdge(signal);
-    //TOGGLE_BIT(PHYPORT_OUT, PHYPIN_DBG);
-}
-
 SchrottPHY::SchrottPHY() :
     PHY(),
     mTimestep(0),
@@ -69,6 +59,16 @@ SchrottPHY::SchrottPHY() :
     // edge detector
     EIMSK = (1 << INT4);
     EICRB = (1 << ISC40);
+}
+
+ISR(TIMER4_COMPA_vect) {
+    currentPHY->doSend();
+}
+
+ISR(INT4_vect, ISR_BLOCK) {
+    bool signal = PINE & (1 << PINE4);
+    currentPHY->onEdge(signal);
+    //TOGGLE_BIT(PHYPORT_OUT, PHYPIN_DBG);
 }
 
 void SchrottPHY::setPayload(const uint8_t* payload, uint16_t len) {

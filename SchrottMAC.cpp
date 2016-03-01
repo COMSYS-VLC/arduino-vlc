@@ -5,12 +5,17 @@
 #include "SchrottMAC.hpp"
 #include "UART.hpp"
 #include <util/crc16.h>
+#include <avr/common.h>
 
 SchrottMAC::SchrottMAC(PHY& phy) :
         MAC(phy), mBitOffset(7), mFrameOffset(0), mState(WAIT_BE),
         mPayloadId(0), mAckId(false), mSendAck(false), mSendAckId(false)
 {
     mFrame << 0;
+
+    for(uint8_t i = 0; i < 5; ++i) {
+        mPayloads[i].used = false;
+    }
 }
 
 uint8_t SchrottMAC::sendPayload(const uint8_t* payload, uint8_t len) {
@@ -35,6 +40,8 @@ uint8_t SchrottMAC::sendPayload(const uint8_t* payload, uint8_t len) {
     for(uint8_t i = 0; i < len; ++i) {
         mPayloads[id].data[i] = payload[i];
     }
+
+    UART::get() << SP << '\n';
 
     if(!mPayloads[mPayloadId].used) {
         mPayloads[id].used = true;
@@ -270,10 +277,10 @@ void SchrottMAC::setPayload() {
         for (uint8_t i = 3; i < (4 + len); ++i) {
             crc = _crc8_ccitt_update(crc, frame[i]);
         }
-        *cur++ = crc;
+        *cur = crc;
 
         UART::get() << "Frame: ";
-        for (uint8_t i = 0; i < 5 + len; ++i) {
+        for (uint8_t i = 0; i < (5 + len); ++i) {
             UART::get() << frame[i] << ' ';
         }
         UART::get() << '\n';
