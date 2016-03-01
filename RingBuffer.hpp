@@ -7,17 +7,20 @@
 
 #include <stdint.h>
 
+/**
+ * SIZE must be power of two - 1
+ */
 template<typename T, uint8_t SIZE>
 class RingBuffer {
 public:
     RingBuffer() : mRead(0), mWrite(0) {}
 
     const T at(uint8_t index) const {
-        return mBuffer[(mRead + index) % (SIZE + 1)];
+        return mBuffer[(mRead + index) & SIZE];
     }
 
     T& at(uint8_t index) {
-        return mBuffer[(mRead + index) % (SIZE + 1)];
+        return mBuffer[(mRead + index) & SIZE];
     }
 
     bool empty() const {
@@ -25,7 +28,7 @@ public:
     }
 
     uint8_t size() const {
-        return ((uint8_t)(((uint16_t)mWrite) + SIZE + 1 - mRead)) % (SIZE + 1);
+        return ((uint8_t)(((uint16_t)mWrite) + SIZE + 1 - mRead)) & SIZE;
     }
 
     uint8_t capacity() const {
@@ -37,15 +40,15 @@ public:
             return *this;
         }
         out = mBuffer[mRead];
-        mRead = (mRead + 1) % (SIZE + 1);
+        mRead = (mRead + 1) & SIZE;
         return *this;
     }
 
     RingBuffer& operator<<(const T& in) {
         mBuffer[mWrite] = in;
-        mWrite = (mWrite + 1) % (SIZE + 1);
+        mWrite = (mWrite + 1) & SIZE;
         if(mRead == mWrite) {
-            mRead = (mRead + 1) % (SIZE + 1);
+            mRead = (mRead + 1) & SIZE;
         }
         return *this;
     }
@@ -55,7 +58,7 @@ public:
             return T();
         }
         const T& out = mBuffer[mRead];
-        mRead = (mRead + 1) % (SIZE + 1);
+        mRead = (mRead + 1) & SIZE;
         return out;
     }
 

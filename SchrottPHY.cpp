@@ -72,7 +72,7 @@ ISR(INT4_vect, ISR_BLOCK) {
 }
 
 void SchrottPHY::setPayload(const uint8_t* payload, uint16_t len) {
-    Buffer *buf = !mNextSendBuffer ? mNextSendBuffer :
+    Buffer *buf = !mNextSendBuffer ? &mSendBuffer1 :
                   (mNextSendBuffer == &mSendBuffer1 ? &mSendBuffer2 : &mSendBuffer1);
 
     for (uint8_t i = 0; i < len; ++i) {
@@ -108,7 +108,6 @@ void SchrottPHY::resync() {
 
 void SchrottPHY::run() {
     while (mSampleBuffer.size()) {
-        UART::get() << '\n' << mSampleBuffer.size() << '\n';
         uint8_t sample = mSampleBuffer.pop();
         callBitHandler(sample & 2);
         callBitHandler(sample & 1);

@@ -7,12 +7,11 @@
 #include "UART.hpp"
 
 int main() {
-    cli();
     SchrottPHY phy;
     SchrottMAC mac(phy);
     MotorController motor;
 
-    //sei();
+    sei();
 
     //mac.sendPayload((const uint8_t*)"Hallo Welt!", 11);
 
@@ -20,6 +19,7 @@ int main() {
         UART::get() << "Send error\n";
     }
 
+    motor.setVelocity(0x40);
     motor.forward();
 
     while(true) {

@@ -9,8 +9,8 @@
 #define CLEAR_BIT(x, y) x &= ~_BV(y)
 
 // Pin 3/E5: Enable
-// Pin 4/G5: Forward
-// Pin 5/E3: Backward
+// Pin 4/G5: Backward
+// Pin 5/E3: Forward
 
 MotorController::MotorController() :
     mVelocity(0xA0)
@@ -29,13 +29,13 @@ MotorController::MotorController() :
 }
 
 void MotorController::forward() {
-    CLEAR_BIT(PORTE, PIN3);
-    SET_BIT(PORTG, PIN5);
+    CLEAR_BIT(PORTG, PIN5);
+    SET_BIT(PORTE, PIN3);
 }
 
 void MotorController::backward() {
-    CLEAR_BIT(PORTG, PIN5);
-    SET_BIT(PORTE, PIN3);
+    CLEAR_BIT(PORTE, PIN3);
+    SET_BIT(PORTG, PIN5);
 }
 
 void MotorController::stop() {
