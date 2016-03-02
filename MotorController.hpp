@@ -18,6 +18,8 @@ public:
     uint8_t velocity() const { return mVelocity; }
     void setVelocity(uint8_t velocity);
 
+    bool isForward() const;
+
 private:
     uint8_t mVelocity;
 };

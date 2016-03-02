@@ -204,7 +204,9 @@ void SchrottMAC::handleFlags(uint8_t flags, bool doAck) {
         bool ackId = flags & (1 << 5);
         if(mAckId == ackId && mPayloads[mPayloadId].used) {
             mPayloads[mPayloadId].used = false;
-            scheduleNext();
+            uint8_t oldId = mPayloadId;
+            scheduleNext(); // schedule next before calling client code
+            callAckHandler(oldId);
             update = false;
         }
     }

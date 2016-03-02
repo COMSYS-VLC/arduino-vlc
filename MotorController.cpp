@@ -7,6 +7,7 @@
 
 #define SET_BIT(x, y)   x |=  _BV(y)
 #define CLEAR_BIT(x, y) x &= ~_BV(y)
+#define GET_BIT(x, y)   static_cast<bool>(x & _BV(y))
 
 // Pin 3/E5: Enable
 // Pin 4/G5: Backward
@@ -46,4 +47,8 @@ void MotorController::stop() {
 void MotorController::setVelocity(uint8_t velocity) {
     mVelocity = velocity;
     OCR3C = velocity;
+}
+
+bool MotorController::isForward() const {
+    return GET_BIT(PORTE, PIN3);
 }
