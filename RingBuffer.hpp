@@ -64,8 +64,8 @@ public:
 
 private:
     T mBuffer[SIZE + 1];
-    uint8_t mRead;
-    uint8_t mWrite;
+    volatile uint8_t mRead;
+    volatile uint8_t mWrite;
 };
 
 #endif //VLC_RINGBUFFER_HPP

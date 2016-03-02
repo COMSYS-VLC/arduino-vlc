@@ -6,12 +6,14 @@
 #define VLC_UART_HPP
 
 #include <stdint.h>
+#include "RingBuffer.hpp"
 
 class UART {
 public:
     UART();
 
     void send(uint8_t byte);
+    uint8_t receive();
 
     UART& operator<<(uint8_t value);
     UART& operator<<(uint16_t value);
@@ -21,6 +23,8 @@ public:
     UART& operator<<(int32_t value) { return value < 0 ? send('-'), *this << (uint32_t)(-value) : *this << (uint32_t)value; }
     UART& operator<<(char c);
     UART& operator<<(const char* str);
+
+    UART& operator>>(uint8_t &value);
 
     static UART& get() { return mInstance; }
 
