@@ -14,6 +14,7 @@ public:
 
     void send(uint8_t byte);
     uint8_t receive();
+    bool hasData() const;
 
     UART& operator<<(uint8_t value);
     UART& operator<<(uint16_t value);

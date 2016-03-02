@@ -43,6 +43,10 @@ uint8_t UART::receive() {
     return UDR0;
 }
 
+bool UART::hasData() const {
+    return !recvBuffer.empty();
+}
+
 UART& UART::operator<<(uint8_t value) {
     if(value == 0) {
         send('0');

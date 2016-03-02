@@ -11,20 +11,14 @@ int main() {
     train.run();
 }
 #else
-#include "SchrottPHY.hpp"
-#include "SchrottMAC.hpp"
-#include "TurnoutController.hpp"
+#include "StationController.hpp"
 
 int main() {
-    SchrottPHY phy;
-    SchrottMAC mac(phy);
-    TurnoutController turnout;
+    StationController station;
 
     sei();
 
-    while(true) {
-        phy.run();
-    }
+    station.run();
 }
 
 #endif // TRAIN
