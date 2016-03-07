@@ -13,7 +13,7 @@ print_board_list()
 set(ARDUINO_DEFAULT_BOARD mega)
 set(ARDUINO_DEFAULT_PORT /dev/ttyACM3)
 
-generate_avr_firmware(train SRCS main.cpp TrainController.cpp MotorController.cpp LEDController.cpp MAC.cpp SchrottMAC.cpp SchrottPHY.cpp UART.cpp BOARD mega PORT /dev/ttyTrain)
+generate_avr_firmware(train SRCS main.cpp TrainController.cpp MotorController.cpp LEDController.cpp Clock.cpp MAC.cpp SchrottMAC.cpp SchrottPHY.cpp UART.cpp BOARD mega PORT /dev/ttyTrain)
 generate_avr_firmware(controller SRCS main.cpp StationController.cpp TurnoutController.cpp LEDController.cpp MAC.cpp SchrottMAC.cpp SchrottPHY.cpp BLE.cpp UART.cpp BOARD mega PORT /dev/ttyController)
 
 target_compile_definitions(train PRIVATE TRAIN=1 TRAIN_ID=12)
