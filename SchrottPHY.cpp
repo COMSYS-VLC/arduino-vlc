@@ -8,20 +8,7 @@
 #include <util/atomic.h>
 #include "MAC.hpp"
 #include "UART.hpp"
-
-#define SET_BIT(x, y) x |= _BV(y)
-#define CLEAR_BIT(x, y) x &= ~_BV(y)
-#define TOGGLE_BIT(x, y) x ^= _BV(y)
-#define APPLY_BIT(x, y, z) (z) ? (SET_BIT(x, y)) : (CLEAR_BIT(x, y))
-
-#define PHYDDR_OUT DDRB
-#define PHYPORT_OUT PORTB
-#define PHYPIN_OUT PB5
-#define PHYPIN_DBG PB6
-
-#define PHYDDR_IN DDRF
-#define PHYPORT_IN PORTF
-#define PHYPIN_IN PF0
+#include "LEDController.hpp"
 
 static SchrottPHY* currentPHY = 0;
 
@@ -40,17 +27,6 @@ SchrottPHY::SchrottPHY() :
 {
     currentPHY = this;
 
-    // configure pins
-    SET_BIT(PHYDDR_OUT, PHYPIN_OUT);
-    CLEAR_BIT(PHYPORT_OUT, PHYPIN_OUT);
-    SET_BIT(PHYDDR_OUT, PHYPIN_DBG);
-    CLEAR_BIT(PHYPORT_OUT, PHYPIN_DBG);
-
-    CLEAR_BIT(PHYDDR_IN, PHYPIN_IN);
-    CLEAR_BIT(PHYPORT_IN, PHYPIN_IN);
-
-    SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
-
     // Initialize Timer 4: 24 kHz
     OCR4A = 1110;
     TCCR4B = (1 << CS40) | (1 << WGM42);
@@ -68,7 +44,7 @@ ISR(TIMER4_COMPA_vect) {
 ISR(INT4_vect, ISR_BLOCK) {
     bool signal = PINE & (1 << PINE4);
     currentPHY->onEdge(signal);
-    //TOGGLE_BIT(PHYPORT_OUT, PHYPIN_DBG);
+    //LEDController::toggle(LEDController::Debug);
 }
 
 void SchrottPHY::setPayload(const uint8_t* payload, uint16_t len) {
@@ -94,10 +70,10 @@ void SchrottPHY::sync(bool send) {
     mNumEdges = 0;
     if(send) {
         mSendStep = 1;
-        TOGGLE_BIT(PHYPORT_OUT, PHYPIN_DBG);
+        LEDController::toggle(LEDController::Debug);
     }
     TCNT4 = 0;
-    SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
+    LEDController::on(LEDController::TX);
     TIFR4 |= (1 << OCF4A);
 }
 
@@ -115,55 +91,55 @@ void SchrottPHY::run() {
 }
 
 void SchrottPHY::doSend() {
-    //TOGGLE_BIT(PHYPORT_OUT, PHYPIN_DBG);
+    //LEDController::toggle(LEDController::Debug);
 
     ++mTimestep;
 
     switch (mSendStep) {
         case 0: // SyncUp
-            SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
+            LEDController::on(LEDController::TX);
             break;
         case 3: // Data1Down
             if(mHasData && !mSendBitH) {
-                CLEAR_BIT(PHYPORT_OUT, PHYPIN_OUT);
+                LEDController::off(LEDController::TX);
             }
             break;
         case 5: // Data1Up
             if(mHasData && !mSendBitH) {
-                SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
+                LEDController::on(LEDController::TX);
             }
             break;
         case 7: // Data2Down
             if(mHasData && mSendBitH) {
-                CLEAR_BIT(PHYPORT_OUT, PHYPIN_OUT);
+                LEDController::off(LEDController::TX);
             }
             break;
         case 9: // Data2Up
             if(mHasData && mSendBitH) {
-                SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
+                LEDController::on(LEDController::TX);
             }
             break;
         case 12: // SyncDown
-            CLEAR_BIT(PHYPORT_OUT, PHYPIN_OUT);
+            LEDController::off(LEDController::TX);
             break;
         case 15: // Data3Up
             if(mHasData && !mSendBitL) {
-                SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
+                LEDController::on(LEDController::TX);
             }
             break;
         case 17: // Data3Down
             if(mHasData && !mSendBitL) {
-                CLEAR_BIT(PHYPORT_OUT, PHYPIN_OUT);
+                LEDController::off(LEDController::TX);
             }
             break;
         case 19: // Data4Up
             if(mHasData && mSendBitL) {
-                SET_BIT(PHYPORT_OUT, PHYPIN_OUT);
+                LEDController::on(LEDController::TX);
             }
             break;
         case 21: // Data4Down
             if(mHasData && mSendBitL) {
-                CLEAR_BIT(PHYPORT_OUT, PHYPIN_OUT);
+                LEDController::off(LEDController::TX);
             }
             break;
         default:
@@ -285,6 +261,6 @@ void SchrottPHY::onEdge(bool signal) {
         }
     }
 
-    //APPLY_BIT(PHYPORT_OUT, PHYPIN_DBG, mSyncState == FullSync);
+    //LEDController::set(LEDController::Debug, mSyncState == FullSync);
 }
 

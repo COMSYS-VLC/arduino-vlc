@@ -2,8 +2,14 @@
 // Created by ney on 02.03.2016.
 //
 
+#include <avr/io.h>
+#include <util/delay.h>
 #include "StationController.hpp"
-#include "UART.hpp"
+#include "LEDController.hpp"
+#include "BLE.hpp"
+
+#define SET_BIT(x, y) x |= _BV(y)
+#define CLEAR_BIT(x, y) x &= ~_BV(y)
 
 StationController::StationController() :
     mMac(mPhy),
@@ -16,14 +22,25 @@ StationController::StationController() :
 void StationController::run() {
     mTurnout.open();
 
+    LEDController::on(LEDController::FrontLeft);
+    LEDController::on(LEDController::FrontRight);
+    LEDController::on(LEDController::RearLeft);
+    LEDController::on(LEDController::RearRight);
+
     while(true) {
         mPhy.run();
 
-        if(UART::get().hasData()) {
+        if(BLE::get().hasData()) {
             uint8_t data;
-            UART::get() >> data;
+            BLE::get() >> data;
 
             sendVelocity(data);
+            while(data--) {
+                LEDController::on(LEDController::Debug);
+                _delay_ms(50);
+                LEDController::off(LEDController::Debug);
+                _delay_ms(500);
+            }
         }
     }
 }

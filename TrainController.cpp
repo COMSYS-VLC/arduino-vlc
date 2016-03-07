@@ -3,6 +3,7 @@
 //
 
 #include "TrainController.hpp"
+#include "LEDController.hpp"
 
 TrainController::TrainController() :
     mMac(mPhy),
@@ -15,6 +16,11 @@ TrainController::TrainController() :
 void TrainController::run() {
     mMotor.setVelocity(0x40);
     mMotor.forward();
+
+    LEDController::on(LEDController::FrontLeft);
+    LEDController::on(LEDController::FrontRight);
+    LEDController::on(LEDController::RearLeft);
+    LEDController::on(LEDController::RearRight);
 
     updateStatusMessage();
 

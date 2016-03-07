@@ -2,7 +2,7 @@
 // Created by jan on 13.01.16.
 //
 
-#include "UART.hpp"
+#include "BLE.hpp"
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -12,44 +12,44 @@
 #define CLEAR_BIT(x, y) x &= ~_BV(y)
 #define TOGGLE_BIT(x, y) x ^= _BV(y)
 
-static UART* uart;
+static BLE* uart;
 static RingBuffer<uint8_t, 127> recvBuffer;
 
-ISR(USART0_RX_vect) {
-    uint8_t data = UDR0;
+ISR(USART2_RX_vect) {
+    uint8_t data = UDR2;
     recvBuffer << data;
 }
 
-UART UART::mInstance;
+BLE BLE::mInstance;
 
-UART::UART() {
+BLE::BLE() {
     uart = this;
 
     uint16_t br = F_CPU / 16 / 9600 - 1;
 
-    // USART 0
-    UBRR0H = br >> 8;
-    UBRR0L = br;
+    // USART 2 (BLEBee)
+    UBRR2H = br >> 8;
+    UBRR2L = br;
 
-    UCSR0B = (1 << TXEN0) | (1 << RXEN0) | (1 << RXCIE0);
-    UCSR0C = (1 << USBS0) | (3 << UCSZ00);
+    UCSR2B = (1 << TXEN2) | (1 << RXEN2) | (1 << RXCIE2);
+    UCSR2C = (1 << USBS2) | (3 << UCSZ20);
 }
 
-void UART::send(uint8_t byte) {
-    while (!(UCSR0A & (1 << UDRE0)));
-    UDR0 = byte;
+void BLE::send(uint8_t byte) {
+    while (!(UCSR2A & (1 << UDRE2)));
+    UDR2 = byte;
 }
 
-uint8_t UART::receive() {
-    while(!(UCSR0A & (1 << RXC0)));
-    return UDR0;
+uint8_t BLE::receive() {
+    while(!(UCSR2A & (1 << RXC2)));
+    return UDR2;
 }
 
-bool UART::hasData() const {
+bool BLE::hasData() const {
     return !recvBuffer.empty();
 }
 
-UART& UART::operator<<(uint8_t value) {
+BLE& BLE::operator<<(uint8_t value) {
     if(value == 0) {
         send('0');
         return *this;
@@ -67,7 +67,7 @@ UART& UART::operator<<(uint8_t value) {
     return *this;
 }
 
-UART& UART::operator<<(uint16_t value) {
+BLE& BLE::operator<<(uint16_t value) {
     if(value == 0) {
         send('0');
         return *this;
@@ -85,7 +85,7 @@ UART& UART::operator<<(uint16_t value) {
     return *this;
 }
 
-UART& UART::operator<<(uint32_t value) {
+BLE& BLE::operator<<(uint32_t value) {
     if(value == 0) {
         send('0');
         return *this;
@@ -103,18 +103,18 @@ UART& UART::operator<<(uint32_t value) {
     return *this;
 }
 
-UART& UART::operator<<(char c) {
+BLE& BLE::operator<<(char c) {
     send(static_cast<uint8_t>(c));
     return *this;
 }
 
-UART& UART::operator<<(const char* str) {
+BLE& BLE::operator<<(const char* str) {
     while(*str) {
         send(static_cast<uint8_t>(*str++));
     }
 }
 
-UART& UART::operator>>(uint8_t &value) {
+BLE& BLE::operator>>(uint8_t &value) {
     while(recvBuffer.empty());
     recvBuffer >> value;
 
