@@ -6,7 +6,8 @@
 
 TrainController::TrainController() :
     mMac(mPhy),
-    mStatusMsgId(0xFF)
+    mStatusMsgId(0xFF),
+    mBlinkState(true)
 {
     mMac.setPayloadHandler(&payloadCallback, this);
     mMac.setAckHandler(&ackCallback, this);
@@ -16,6 +17,8 @@ void TrainController::run() {
     mMotor.setVelocity(0x40);
     mMotor.forward();
 
+    updateLight(LEDController::FrontLeft, Off);
+    updateLight(LEDController::RearRight, Off);
     updateLight(LEDController::FrontLeft, Blinking);
     updateLight(LEDController::FrontRight, Off);
     updateLight(LEDController::RearLeft, Off);
@@ -105,13 +108,13 @@ void TrainController::blinkCallback(void *data) {
     for(uint8_t i = 0; i < 4; ++i) {
         if(Blinking == tc->mLights[i]) {
             if(tc->mBlinkState) {
-                LEDController::on(LEDController::FrontLeft + i);
+                LEDController::on(static_cast<LEDController::LED>(LEDController::FrontLeft + i));
             } else {
-                LEDController::off(LEDController::FrontLeft + i);
+                LEDController::off(static_cast<LEDController::LED>(LEDController::FrontLeft + i));
             }
         }
     }
     tc->mBlinkState = !tc->mBlinkState;
 
-    tc->mClock.execDelayed(tc->BLINK_DELAY, &blinkCallback, data);
+    tc->mClock.execDelayed(TrainController::BLINK_DELAY, &blinkCallback, data);
 }
