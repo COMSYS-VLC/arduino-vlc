@@ -6,9 +6,6 @@
 #include "StationController.hpp"
 #include "LEDController.hpp"
 
-#define SET_BIT(x, y) x |= _BV(y)
-#define CLEAR_BIT(x, y) x &= ~_BV(y)
-
 StationController::StationController() :
     mMac(mPhy),
     mVelocityMsgId(0xFF),
@@ -17,6 +14,10 @@ StationController::StationController() :
     mForward(true),
     mLEDstatesMsgId(0xFF)
 {
+    for(uint8_t i = 0; i < 4; ++i) {
+        mLEDs[i] = 0;
+    }
+
     mMac.setPayloadHandler(&payloadCallback, this);
     mMac.setAckHandler(&ackCallback, this);
     mBLE.registerCallback(&BLECallback, this);
@@ -24,6 +25,7 @@ StationController::StationController() :
 
 void StationController::run() {
     mTurnout.open();
+    sendBLETurnoutState();
 
     LEDController::on(LEDController::FrontLeft);
     LEDController::on(LEDController::FrontRight);
@@ -56,6 +58,7 @@ void StationController::sendLEDstates() {
 
     uint8_t payload[2];
     payload[0] = 0x20;
+    payload[1] = 0;
 
     for(uint8_t i = 0; i < 4; ++i) {
         payload[1] |= (mLEDs[i] << (6 - i * 2));
@@ -71,14 +74,16 @@ void StationController::payloadCallback(const uint8_t *payload, uint8_t len, voi
 
     if(2 < len) {
         if(sc->mVelocityMsgId == 0xFF) {
-            sc->mForward = payload[0] & 0x01;
+            sc->mForward = !(payload[0] & 0x01);
             sc->mVelocity = payload[1];
+            sc->sendBLEVelocity();
         }
 
         if(sc->mLEDstatesMsgId == 0xFF) {
             for (uint8_t i = 0; i < 4; ++i) {
                 sc->mLEDs[i] = (payload[2] >> (6 - i * 2)) & 0x03;
             }
+            sc->sendBLELEDStates();
         }
     }
 }
@@ -94,7 +99,6 @@ void StationController::ackCallback(uint8_t msgId, void *data) {
 }
 
 void StationController::BLECallback(uint8_t* payload, uint8_t len, void* data) {
-    // IDs: 0 (Turnout), 1 (Velocity), 2-5 (LEDs, FL, FR, RL, RR)
     StationController* sc = reinterpret_cast<StationController*>(data);
     switch(payload[0]) {
         case 0:
@@ -109,7 +113,7 @@ void StationController::BLECallback(uint8_t* payload, uint8_t len, void* data) {
 
         case 1:
             sc->mVelocity = (payload[1] & 0x3F) << 2;
-            sc->mForward = payload[1] & 0x80;
+            sc->mForward = !(payload[1] & 0x80);
             sc->sendVelocity();
             break;
 
@@ -120,6 +124,7 @@ void StationController::BLECallback(uint8_t* payload, uint8_t len, void* data) {
             sc->mLEDs[payload[0] - 2] = payload[1];
             sc->sendLEDstates();
             break;
+
         case 254:
             sc->sendBLEVelocity();
             sc->sendBLELEDStates();
@@ -133,8 +138,8 @@ void StationController::sendBLEVelocity() {
 
     payload[0] = 1;
     payload[1] = mVelocity >> 2;
-    if(mForward) {
-        mVelocity |= (0x80);
+    if(!mForward) {
+        payload[1] |= (0x80);
     }
 
     mBLE.send(payload, 2);

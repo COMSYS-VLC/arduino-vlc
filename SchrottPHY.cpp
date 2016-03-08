@@ -28,7 +28,7 @@ SchrottPHY::SchrottPHY() :
     currentPHY = this;
 
     // Initialize Timer 4: 24 kHz
-    OCR4A = 1110;
+    OCR4A = 660;
     TCCR4B = (1 << CS40) | (1 << WGM42);
     TIMSK4 = (1 << OCIE4A);
 
@@ -70,7 +70,7 @@ void SchrottPHY::sync(bool send) {
     mNumEdges = 0;
     if(send) {
         mSendStep = 1;
-        LEDController::toggle(LEDController::Debug);
+        //LEDController::toggle(LEDController::Debug);
     }
     TCNT4 = 0;
     LEDController::on(LEDController::TX);
@@ -207,6 +207,7 @@ void SchrottPHY::onEdge(bool signal) {
                                 mSampleBuffer << 0;
                                 mSynchronizing = false;
                                 mSyncState = FullSync;
+                                //LEDController::toggle(LEDController::Debug);
                             } else {
                                 // NO SYNC!
                                 //resync();
@@ -214,6 +215,7 @@ void SchrottPHY::onEdge(bool signal) {
                                 mSampleBuffer << 1;
                                 mSynchronizing = false;
                                 mSyncState = FullSync;
+                                //LEDController::toggle(LEDController::Debug);
                             }
                         /*} else {
                             // NO SYNC!
@@ -228,6 +230,7 @@ void SchrottPHY::onEdge(bool signal) {
                             mSampleBuffer << 2;
                             mSynchronizing = false;
                             mSyncState = FullSync;
+                            //LEDController::toggle(LEDController::Debug);
                         } else {
                             // NO SYNC!
                             //resync();
@@ -235,6 +238,7 @@ void SchrottPHY::onEdge(bool signal) {
                             mSampleBuffer << 3;
                             mSynchronizing = false;
                             mSyncState = FullSync;
+                            //LEDController::toggle(LEDController::Debug);
                         }
                     }
                 } else {

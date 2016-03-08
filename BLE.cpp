@@ -15,8 +15,6 @@ static RingBuffer<uint8_t, 127> recvBuffer;
 ISR(USART2_RX_vect) {
     uint8_t data = UDR2;
     recvBuffer << data;
-
-    UART::get() << data << ' ';
 }
 
 BLE::BLE() : mCallback(0) {
@@ -46,10 +44,8 @@ void BLE::run() {
             uint8_t crc = 0x00;
             for (uint8_t i = 0; i < 3; ++i) {
                 crc = _crc8_ccitt_update(crc, recvBuffer.at(i));
-                //UART::get() << i << " " << crc << " \n";
             }
             if (crc != crcPacket) {
-                UART::get() << "CRC mismatch: " << crc << " vs " << crcPacket << '\n';
                 recvBuffer.pop();
             } else {
                 uint8_t payload[2];

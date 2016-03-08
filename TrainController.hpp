@@ -21,8 +21,8 @@ public:
 private:
     enum LightState {
         Off = 0,
-        On = 1,
-        Blinking = 2
+        Blinking = 1,
+        On = 2,
     };
 
     void updateStatusMessage();

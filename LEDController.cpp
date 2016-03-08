@@ -8,10 +8,10 @@
 
 const LEDController::LEDInfo LEDController::mInfo[6] = {
     {&PORTJ, _BV(PORTJ1)},
-    {&PORTF, _BV(PORTF3)},
-    {&PORTF, _BV(PORTF2)},
-    {&PORTF, _BV(PORTF1)},
     {&PORTF, _BV(PORTF0)},
+    {&PORTF, _BV(PORTF1)},
+    {&PORTF, _BV(PORTF2)},
+    {&PORTF, _BV(PORTF3)},
     {&PORTF, _BV(PORTF4)}
 };
 

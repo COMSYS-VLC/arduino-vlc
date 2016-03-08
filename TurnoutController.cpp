@@ -8,7 +8,6 @@
 
 #define SET_BIT(x, y)   x |=  _BV(y)
 #define CLEAR_BIT(x, y) x &= ~_BV(y)
-#define TOGGLE_BIT(x, y) x ^= _BV(y)
 
 static TurnoutController* turnout = 0;
 

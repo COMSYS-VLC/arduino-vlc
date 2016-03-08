@@ -4,6 +4,7 @@
 
 #include "SchrottMAC.hpp"
 #include "UART.hpp"
+#include "LEDController.hpp"
 #include <util/crc16.h>
 #include <avr/common.h>
 
@@ -203,6 +204,7 @@ void SchrottMAC::handleFlags(uint8_t flags, bool doAck) {
     if(flags & (1 << 6)) { // acking
         bool ackId = flags & (1 << 5);
         if(mAckId == ackId && mPayloads[mPayloadId].used) {
+            LEDController::toggle(LEDController::Debug);
             mPayloads[mPayloadId].used = false;
             uint8_t oldId = mPayloadId;
             scheduleNext(); // schedule next before calling client code
@@ -279,19 +281,19 @@ void SchrottMAC::setPayload() {
         }
         *cur = crc;
 
-        UART::get() << "Frame: ";
+        /*UART::get() << "Frame: ";
         for (uint8_t i = 0; i < (5 + len); ++i) {
             UART::get() << frame[i] << ' ';
         }
-        UART::get() << '\n';
+        UART::get() << '\n';*/
 
         phy().setPayload(frame, 5 + len);
     } else {
-        UART::get() << "Frame: ";
+        /*UART::get() << "Frame: ";
         for (uint8_t i = 0; i < 4; ++i) {
             UART::get() << frame[i] << ' ';
         }
-        UART::get() << '\n';
+        UART::get() << '\n';*/
 
         phy().setPayload(frame, 4);
     }

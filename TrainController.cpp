@@ -14,15 +14,13 @@ TrainController::TrainController() :
 }
 
 void TrainController::run() {
-    mMotor.setVelocity(0xFF);
+    mMotor.setVelocity(0xA0);
     mMotor.forward();
 
     updateLight(LEDController::FrontLeft, Off);
-    updateLight(LEDController::RearRight, Off);
-    updateLight(LEDController::FrontLeft, Blinking);
     updateLight(LEDController::FrontRight, Off);
     updateLight(LEDController::RearLeft, Off);
-    updateLight(LEDController::RearRight, Blinking);
+    updateLight(LEDController::RearRight, Off);
 
     updateStatusMessage();
 
