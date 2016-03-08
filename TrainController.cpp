@@ -14,7 +14,7 @@ TrainController::TrainController() :
 }
 
 void TrainController::run() {
-    mMotor.setVelocity(0x40);
+    mMotor.setVelocity(0xFF);
     mMotor.forward();
 
     updateLight(LEDController::FrontLeft, Off);

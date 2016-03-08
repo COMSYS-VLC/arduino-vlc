@@ -3,20 +3,23 @@
 //
 
 #include <avr/io.h>
-#include <util/delay.h>
 #include "StationController.hpp"
 #include "LEDController.hpp"
-#include "BLE.hpp"
 
 #define SET_BIT(x, y) x |= _BV(y)
 #define CLEAR_BIT(x, y) x &= ~_BV(y)
 
 StationController::StationController() :
     mMac(mPhy),
-    mVelocityMsgId(0xFF)
+    mVelocityMsgId(0xFF),
+    mTurnoutStraight(true),
+    mVelocity(0xFF),
+    mForward(true),
+    mLEDstatesMsgId(0xFF)
 {
     mMac.setPayloadHandler(&payloadCallback, this);
     mMac.setAckHandler(&ackCallback, this);
+    mBLE.registerCallback(&BLECallback, this);
 }
 
 void StationController::run() {
@@ -29,40 +32,130 @@ void StationController::run() {
 
     while(true) {
         mPhy.run();
-
-        if(BLE::get().hasData()) {
-            uint8_t data;
-            BLE::get() >> data;
-
-            sendVelocity(data);
-            while(data--) {
-                LEDController::on(LEDController::Debug);
-                _delay_ms(50);
-                LEDController::off(LEDController::Debug);
-                _delay_ms(500);
-            }
-        }
+        mBLE.run();
     }
 }
 
-void StationController::sendVelocity(uint8_t vel) {
+void StationController::sendVelocity() {
     mMac.cancelPayload(mVelocityMsgId);
 
     uint8_t payload[2];
     payload[0] = 0x10;
-    payload[1] = vel;
+    payload[1] = mVelocity;
+    if(!mForward) {
+        payload[0] |= 1;
+    }
 
     mVelocityMsgId = mMac.sendPayload(payload, 2);
+
+    sendBLEVelocity();
+}
+
+void StationController::sendLEDstates() {
+    mMac.cancelPayload(mLEDstatesMsgId);
+
+    uint8_t payload[2];
+    payload[0] = 0x20;
+
+    for(uint8_t i = 0; i < 4; ++i) {
+        payload[1] |= (mLEDs[i] << (6 - i * 2));
+    }
+
+    mLEDstatesMsgId = mMac.sendPayload(payload, 2);
+
+    sendBLELEDStates();
 }
 
 void StationController::payloadCallback(const uint8_t *payload, uint8_t len, void* data) {
     StationController* sc = reinterpret_cast<StationController*>(data);
 
-    if(1 < len) {
-        // TODO
+    if(2 < len) {
+        if(sc->mVelocityMsgId == 0xFF) {
+            sc->mForward = payload[0] & 0x01;
+            sc->mVelocity = payload[1];
+        }
+
+        if(sc->mLEDstatesMsgId == 0xFF) {
+            for (uint8_t i = 0; i < 4; ++i) {
+                sc->mLEDs[i] = (payload[2] >> (6 - i * 2)) & 0x03;
+            }
+        }
     }
 }
 
 void StationController::ackCallback(uint8_t msgId, void *data) {
     StationController* sc = reinterpret_cast<StationController*>(data);
+
+    if(msgId == sc->mVelocityMsgId) {
+        sc->mVelocityMsgId = 0xFF;
+    } else if (msgId == sc->mLEDstatesMsgId) {
+        sc->mLEDstatesMsgId = 0xFF;
+    }
+}
+
+void StationController::BLECallback(uint8_t* payload, uint8_t len, void* data) {
+    // IDs: 0 (Turnout), 1 (Velocity), 2-5 (LEDs, FL, FR, RL, RR)
+    StationController* sc = reinterpret_cast<StationController*>(data);
+    switch(payload[0]) {
+        case 0:
+            if(payload[1]) {
+                sc->mTurnout.close();
+                sc->mTurnoutStraight = false;
+            } else {
+                sc->mTurnout.open();
+                sc->mTurnoutStraight =  true;
+            }
+            break;
+
+        case 1:
+            sc->mVelocity = (payload[1] & 0x3F) << 2;
+            sc->mForward = payload[1] & 0x80;
+            sc->sendVelocity();
+            break;
+
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+            sc->mLEDs[payload[0] - 2] = payload[1];
+            sc->sendLEDstates();
+            break;
+        case 254:
+            sc->sendBLEVelocity();
+            sc->sendBLELEDStates();
+            sc->sendBLETurnoutState();
+            break;
+    }
+}
+
+void StationController::sendBLEVelocity() {
+    uint8_t payload[2];
+
+    payload[0] = 1;
+    payload[1] = mVelocity >> 2;
+    if(mForward) {
+        mVelocity |= (0x80);
+    }
+
+    mBLE.send(payload, 2);
+}
+
+void StationController::sendBLELEDStates() {
+    for(uint8_t i = 0; i < 4; ++i) {
+        uint8_t payload[2];
+
+        payload[0] = i + 2;
+        payload[1] = mLEDs[i];
+
+        mBLE.send(payload, 2);
+    }
+}
+
+void StationController::sendBLETurnoutState() {
+    uint8_t payload[2];
+
+    payload[0] = 0;
+    payload[1] = !mTurnoutStraight;
+
+    mBLE.send(payload, 2);
 }

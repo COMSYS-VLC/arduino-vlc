@@ -10,27 +10,24 @@
 
 class BLE {
 public:
+    typedef void (*BLECallback)(uint8_t*, uint8_t, void*);
+
     BLE();
 
-    void send(uint8_t byte);
+    void run();
     uint8_t receive();
     bool hasData() const;
-
-    BLE& operator<<(uint8_t value);
-    BLE& operator<<(uint16_t value);
-    BLE& operator<<(uint32_t value);
-    BLE& operator<<(int8_t value) { return value < 0 ? send('-'), *this << (uint8_t)(-value) : *this << (uint8_t)value; }
-    BLE& operator<<(int16_t value) { return value < 0 ? send('-'), *this << (uint16_t)(-value) : *this << (uint16_t)value; }
-    BLE& operator<<(int32_t value) { return value < 0 ? send('-'), *this << (uint32_t)(-value) : *this << (uint32_t)value; }
-    BLE& operator<<(char c);
-    BLE& operator<<(const char* str);
+    void send(uint8_t* data, uint8_t len);
 
     BLE& operator>>(uint8_t &value);
 
-    static BLE& get() { return mInstance; }
+    void registerCallback(BLECallback callback, void* data);
 
 private:
-    static BLE mInstance;
+    void send(uint8_t data);
+
+    BLECallback mCallback;
+    void* mCallbackData;
 };
 
 
