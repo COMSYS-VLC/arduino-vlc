@@ -15,8 +15,6 @@ public:
     BLE();
 
     void run();
-    uint8_t receive();
-    bool hasData() const;
     void send(uint8_t* data, uint8_t len);
 
     BLE& operator>>(uint8_t &value);

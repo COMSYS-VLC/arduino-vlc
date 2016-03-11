@@ -3,10 +3,8 @@
 //
 
 #include "SchrottMAC.hpp"
-#include "UART.hpp"
 #include "LEDController.hpp"
 #include <util/crc16.h>
-#include <avr/common.h>
 
 SchrottMAC::SchrottMAC(PHY& phy) :
         MAC(phy), mBitOffset(7), mFrameOffset(0), mState(WAIT_BE),

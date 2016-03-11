@@ -3,8 +3,6 @@
 //
 
 #include "BLE.hpp"
-#include "LEDController.hpp"
-#include "UART.hpp"
 
 #include <avr/io.h>
 #include <avr/interrupt.h>

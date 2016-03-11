@@ -5,9 +5,6 @@
 #include "SchrottPHY.hpp"
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <util/atomic.h>
-#include "MAC.hpp"
-#include "UART.hpp"
 #include "LEDController.hpp"
 
 static SchrottPHY* currentPHY = 0;

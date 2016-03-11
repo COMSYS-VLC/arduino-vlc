@@ -130,6 +130,8 @@ void StationController::BLECallback(uint8_t* payload, uint8_t len, void* data) {
             sc->sendBLELEDStates();
             sc->sendBLETurnoutState();
             break;
+        default:
+            break;
     }
 }
 

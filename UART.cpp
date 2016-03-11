@@ -6,11 +6,9 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <util/delay.h>
 
 #define SET_BIT(x, y) x |= _BV(y)
 #define CLEAR_BIT(x, y) x &= ~_BV(y)
-#define TOGGLE_BIT(x, y) x ^= _BV(y)
 
 static UART* uart;
 static RingBuffer<uint8_t, 127> recvBuffer;
@@ -112,11 +110,11 @@ UART& UART::operator<<(const char* str) {
     while(*str) {
         send(static_cast<uint8_t>(*str++));
     }
+    return *this;
 }
 
 UART& UART::operator>>(uint8_t &value) {
     while(recvBuffer.empty());
     recvBuffer >> value;
-
     return *this;
 }
