@@ -1,7 +1,3 @@
-//
-// Created by oggy on 26.02.16.
-//
-
 #include "MotorController.hpp"
 #include <avr/io.h>
 

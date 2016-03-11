@@ -13,14 +13,14 @@ print_board_list()
 set(ARDUINO_DEFAULT_BOARD mega)
 set(ARDUINO_DEFAULT_PORT /dev/ttyACM3)
 
-generate_avr_firmware(train SRCS main.cpp TrainController.cpp MotorController.cpp LEDController.cpp Clock.cpp MAC.cpp SchrottMAC.cpp SchrottPHY.cpp UART.cpp BOARD mega PORT /dev/ttyTrain)
-generate_avr_firmware(controller SRCS main.cpp StationController.cpp TurnoutController.cpp LEDController.cpp MAC.cpp SchrottMAC.cpp SchrottPHY.cpp BLE.cpp UART.cpp BOARD mega PORT /dev/ttyController)
+generate_avr_firmware(train SRCS main.cpp TrainController.cpp MotorController.cpp LEDController.cpp Clock.cpp MAC.cpp VLCMAC.cpp VLCPHY.cpp UART.cpp BOARD mega PORT /dev/ttyTrain)
+generate_avr_firmware(controller SRCS main.cpp StationController.cpp TurnoutController.cpp LEDController.cpp MAC.cpp VLCMAC.cpp VLCPHY.cpp BLE.cpp UART.cpp BOARD mega PORT /dev/ttyController)
 
 target_compile_definitions(train PRIVATE TRAIN=1 TRAIN_ID=12)
 target_compile_definitions(controller PRIVATE CONTROLLER=1)
 
-generate_avr_firmware(eva-recv SRCS main.cpp LEDController.cpp MAC.cpp SchrottMAC.cpp SchrottPHY.cpp UART.cpp BOARD mega PORT /dev/ttyTrain)
-generate_avr_firmware(eva-send SRCS main.cpp LEDController.cpp Clock.cpp MAC.cpp SchrottMAC.cpp SchrottPHY.cpp UART.cpp BOARD mega PORT /dev/ttyController)
+generate_avr_firmware(eva-recv SRCS main.cpp LEDController.cpp MAC.cpp VLCMAC.cpp VLCPHY.cpp UART.cpp BOARD mega PORT /dev/ttyTrain)
+generate_avr_firmware(eva-send SRCS main.cpp LEDController.cpp Clock.cpp MAC.cpp VLCMAC.cpp VLCPHY.cpp UART.cpp BOARD mega PORT /dev/ttyController)
 
 target_compile_definitions(eva-recv PRIVATE EVA_RECV=1)
 target_compile_definitions(eva-send PRIVATE EVA_SEND=1)

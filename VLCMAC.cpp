@@ -1,12 +1,8 @@
-//
-// Created by jan on 13.01.16.
-//
-
-#include "SchrottMAC.hpp"
+#include "VLCMAC.hpp"
 #include "LEDController.hpp"
 #include <util/crc16.h>
 
-SchrottMAC::SchrottMAC(PHY& phy) :
+VLCMAC::VLCMAC(PHY& phy) :
         MAC(phy), mBitOffset(7), mFrameOffset(0), mState(WAIT_BE),
         mPayloadId(0), mAckId(false), mSendAck(false), mSendAckId(false)
 {
@@ -17,7 +13,7 @@ SchrottMAC::SchrottMAC(PHY& phy) :
     }
 }
 
-uint8_t SchrottMAC::sendPayload(const uint8_t* payload, uint8_t len) {
+uint8_t VLCMAC::sendPayload(const uint8_t* payload, uint8_t len) {
     if(0 == len || 31 < len) {
         return 0xFE;
     }
@@ -50,7 +46,7 @@ uint8_t SchrottMAC::sendPayload(const uint8_t* payload, uint8_t len) {
     return id;
 }
 
-void SchrottMAC::cancelPayload(uint8_t id) {
+void VLCMAC::cancelPayload(uint8_t id) {
     if(5 < id) {
         return;
     }
@@ -60,8 +56,7 @@ void SchrottMAC::cancelPayload(uint8_t id) {
     }
 }
 
-void SchrottMAC::handleBit(bool bit) {
-    //UART::get() << bit;
+void VLCMAC::handleBit(bool bit) {
     if (bit) {
         mFrame.at(mFrame.size() - 1) |= (1 << mBitOffset);
     }
@@ -84,7 +79,6 @@ void SchrottMAC::handleBit(bool bit) {
                 break;
             } else {
                 mState = WAIT_EF;
-                //UART::get() << "Frame started\n";
             }
 
         case WAIT_EF:
@@ -95,7 +89,6 @@ void SchrottMAC::handleBit(bool bit) {
                     break;
                 } else {
                     mState = WAIT_LENGTH;
-                    //UART::get() << "BEEF complete\n";
                 }
             } else {
                 needMore = true;
@@ -111,7 +104,6 @@ void SchrottMAC::handleBit(bool bit) {
                     crc = _crc8_ccitt_update(crc, frameByte(i));
                 }
                 if(crc != crcPacket) {
-                    //UART::get() << "Packet dropped: HCRC " << crcPacket << " vs. " << crc << '\n';
                     shiftFrame();
                     mState = WAIT_BE;
                 } else {
@@ -119,7 +111,6 @@ void SchrottMAC::handleBit(bool bit) {
                     if(0 == len || len + 5 <= fSize) {
                         handleFlags(frameByte(2), 0 != len);
                         if(0 != len) {
-                            //UART::get() << "Packet complete: " << (len + 5) << " bytes \n";
                             // Validate (Header checksum + Payload) checksum
                             crc = _crc8_ccitt_update(0x00, frameByte(3));
                             uint8_t payload[len];
@@ -129,20 +120,14 @@ void SchrottMAC::handleBit(bool bit) {
                             }
                             crcPacket = frameByte(len + 4);
                             if (crc != crcPacket) {
-                                //UART::get() << "Packet dropped: CRC " << crcPacket << " vs. " << crc << '\n';
                                 shiftFrame();
                             } else {
-                                /*for (uint8_t i = 0; i < len; ++i) {
-                                    UART::get() << (char) payload[i];
-                                }
-                                UART::get() << '\n';*/
                                 callPayloadHandler(payload, len);
                                 for (uint8_t i = 0; i < len + 5; ++i) {
                                     mFrame.pop();
                                 }
                             }
                         } else {
-                            //UART::get() << "Packet complete: 4 bytes \n";
                             for (uint8_t i = 0; i < 4; ++i) {
                                 mFrame.pop();
                             }
@@ -160,7 +145,7 @@ void SchrottMAC::handleBit(bool bit) {
     }
 }
 
-uint8_t SchrottMAC::frameByte(uint8_t offset) {
+uint8_t VLCMAC::frameByte(uint8_t offset) {
     uint8_t byte = mFrame.at(offset);
     if(0 != mFrameOffset) {
         byte <<= mFrameOffset;
@@ -169,7 +154,7 @@ uint8_t SchrottMAC::frameByte(uint8_t offset) {
     return byte;
 }
 
-void SchrottMAC::shiftFrame() {
+void VLCMAC::shiftFrame() {
     ++mFrameOffset;
     if(8 == mFrameOffset) {
         mFrame.pop();
@@ -177,7 +162,7 @@ void SchrottMAC::shiftFrame() {
     }
 }
 
-uint8_t SchrottMAC::frameSize() {
+uint8_t VLCMAC::frameSize() {
     uint8_t size = mFrame.size() - 1;
     if(mFrameOffset > (7 - mBitOffset)) {
         --size;
@@ -185,7 +170,7 @@ uint8_t SchrottMAC::frameSize() {
     return size;
 }
 
-void SchrottMAC::handleFlags(uint8_t flags, bool doAck) {
+void VLCMAC::handleFlags(uint8_t flags, bool doAck) {
     bool update = false;
 
     if(mSendAck != doAck) {
@@ -216,7 +201,7 @@ void SchrottMAC::handleFlags(uint8_t flags, bool doAck) {
     }
 }
 
-void SchrottMAC::scheduleNext() {
+void VLCMAC::scheduleNext() {
     // Find used payload slot
     uint8_t id = (mPayloadId + 1) % 5;
     for(uint8_t i = 0; i < 5; ++i) {
@@ -232,7 +217,7 @@ void SchrottMAC::scheduleNext() {
     setPayload();
 }
 
-void SchrottMAC::setPayload() {
+void VLCMAC::setPayload() {
     if(!mSendAck && !mPayloads[mPayloadId].used) {
         phy().clearPayload();
         return;
@@ -279,20 +264,8 @@ void SchrottMAC::setPayload() {
         }
         *cur = crc;
 
-        /*UART::get() << "Frame: ";
-        for (uint8_t i = 0; i < (5 + len); ++i) {
-            UART::get() << frame[i] << ' ';
-        }
-        UART::get() << '\n';*/
-
         phy().setPayload(frame, 5 + len);
     } else {
-        /*UART::get() << "Frame: ";
-        for (uint8_t i = 0; i < 4; ++i) {
-            UART::get() << frame[i] << ' ';
-        }
-        UART::get() << '\n';*/
-
         phy().setPayload(frame, 4);
     }
 }

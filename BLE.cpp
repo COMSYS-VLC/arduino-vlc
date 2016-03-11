@@ -1,15 +1,13 @@
-//
-// Created by jan on 13.01.16.
-//
-
 #include "BLE.hpp"
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/crc16.h>
 
+/** Ring buffer to store received bytes until the main thread consumes them */
 static RingBuffer<uint8_t, 127> recvBuffer;
 
+/** Interrupt called each time a new byte is received via UART2/BLE */
 ISR(USART2_RX_vect) {
     uint8_t data = UDR2;
     recvBuffer << data;
@@ -80,13 +78,6 @@ void BLE::send(uint8_t* data, uint8_t len) {
 void BLE::send(uint8_t byte) {
     while (!(UCSR2A & (1 << UDRE2)));
     UDR2 = byte;
-}
-
-BLE& BLE::operator>>(uint8_t &value) {
-    while(recvBuffer.empty());
-    recvBuffer >> value;
-
-    return *this;
 }
 
 void BLE::registerCallback(BLE::BLECallback callback, void *data) {

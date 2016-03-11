@@ -1,15 +1,12 @@
-//
-// Created by jan on 13.01.16.
-//
-
-#include "SchrottPHY.hpp"
+#include "VLCPHY.hpp"
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "LEDController.hpp"
 
-static SchrottPHY* currentPHY = 0;
+/** Current instance of this PHY for handling of interrupts */
+static VLCPHY* currentPHY = 0;
 
-SchrottPHY::SchrottPHY() :
+VLCPHY::VLCPHY() :
     PHY(),
     mTimestep(0),
     mSynchronizing(false),
@@ -34,17 +31,18 @@ SchrottPHY::SchrottPHY() :
     EICRB = (1 << ISC40);
 }
 
+/** ISR for time progress within the PHY, handled by sending code */
 ISR(TIMER4_COMPA_vect) {
     currentPHY->doSend();
 }
 
+/** ISR getting called on every signal change from hardware edge "detector" */
 ISR(INT4_vect, ISR_BLOCK) {
     bool signal = PINE & (1 << PINE4);
     currentPHY->onEdge(signal);
-    //LEDController::toggle(LEDController::Debug);
 }
 
-void SchrottPHY::setPayload(const uint8_t* payload, uint16_t len) {
+void VLCPHY::setPayload(const uint8_t* payload, uint16_t len) {
     Buffer *buf = !mNextSendBuffer ? &mSendBuffer1 :
                   (mNextSendBuffer == &mSendBuffer1 ? &mSendBuffer2 : &mSendBuffer1);
 
@@ -58,28 +56,27 @@ void SchrottPHY::setPayload(const uint8_t* payload, uint16_t len) {
     mNextSendBuffer = buf;
 }
 
-void SchrottPHY::clearPayload() {
+void VLCPHY::clearPayload() {
     mNextSendBuffer = 0;
 }
 
-void SchrottPHY::sync(bool send) {
+void VLCPHY::sync(bool send) {
     mTimestep = 1;
     mNumEdges = 0;
     if(send) {
         mSendStep = 1;
-        //LEDController::toggle(LEDController::Debug);
     }
     TCNT4 = 0;
     LEDController::on(LEDController::TX);
     TIFR4 |= (1 << OCF4A);
 }
 
-void SchrottPHY::resync() {
+void VLCPHY::resync() {
     mSyncState = NoSync;
     sync(false);
 }
 
-void SchrottPHY::run() {
+void VLCPHY::run() {
     while (mSampleBuffer.size()) {
         uint8_t sample = mSampleBuffer.pop();
         callBitHandler(sample & 2);
@@ -87,9 +84,7 @@ void SchrottPHY::run() {
     }
 }
 
-void SchrottPHY::doSend() {
-    //LEDController::toggle(LEDController::Debug);
-
+void VLCPHY::doSend() {
     ++mTimestep;
 
     switch (mSendStep) {
@@ -169,9 +164,10 @@ void SchrottPHY::doSend() {
     }
 }
 
-void SchrottPHY::onEdge(bool signal) {
+void VLCPHY::onEdge(bool signal) {
     uint8_t now = mTimestep;
 
+    // More (too?) strict variant commented
     if (mSynchronizing || FullSync == mSyncState) {
         // Synchronized or synchronizing
         if (mNumEdges < 10) {
@@ -204,7 +200,6 @@ void SchrottPHY::onEdge(bool signal) {
                                 mSampleBuffer << 0;
                                 mSynchronizing = false;
                                 mSyncState = FullSync;
-                                //LEDController::toggle(LEDController::Debug);
                             } else {
                                 // NO SYNC!
                                 //resync();
@@ -212,7 +207,6 @@ void SchrottPHY::onEdge(bool signal) {
                                 mSampleBuffer << 1;
                                 mSynchronizing = false;
                                 mSyncState = FullSync;
-                                //LEDController::toggle(LEDController::Debug);
                             }
                         /*} else {
                             // NO SYNC!
@@ -227,7 +221,6 @@ void SchrottPHY::onEdge(bool signal) {
                             mSampleBuffer << 2;
                             mSynchronizing = false;
                             mSyncState = FullSync;
-                            //LEDController::toggle(LEDController::Debug);
                         } else {
                             // NO SYNC!
                             //resync();
@@ -235,7 +228,6 @@ void SchrottPHY::onEdge(bool signal) {
                             mSampleBuffer << 3;
                             mSynchronizing = false;
                             mSyncState = FullSync;
-                            //LEDController::toggle(LEDController::Debug);
                         }
                     }
                 } else {
@@ -261,7 +253,5 @@ void SchrottPHY::onEdge(bool signal) {
             mSynchronizing = true;
         }
     }
-
-    //LEDController::set(LEDController::Debug, mSyncState == FullSync);
 }
 
