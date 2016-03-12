@@ -1,7 +1,3 @@
-//
-// Created by ney on 02.03.2016.
-//
-
 #include <avr/io.h>
 #include "StationController.hpp"
 #include "LEDController.hpp"

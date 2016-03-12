@@ -1,7 +1,3 @@
-//
-// Created by jan on 13.01.16.
-//
-
 #include "UART.hpp"
 
 #include <avr/io.h>
@@ -10,9 +6,10 @@
 #define SET_BIT(x, y) x |= _BV(y)
 #define CLEAR_BIT(x, y) x &= ~_BV(y)
 
-static UART* uart;
+/** Buffer for received bytes */
 static RingBuffer<uint8_t, 127> recvBuffer;
 
+/** ISR called on every received byte via UART */
 ISR(USART0_RX_vect) {
     uint8_t data = UDR0;
     recvBuffer << data;
@@ -21,14 +18,14 @@ ISR(USART0_RX_vect) {
 UART UART::mInstance;
 
 UART::UART() {
-    uart = this;
-
+    // 9600 baud
     uint16_t br = F_CPU / 16 / 9600 - 1;
 
     // USART 0
     UBRR0H = br >> 8;
     UBRR0L = br;
 
+    // Enable USART with arduino settings
     UCSR0B = (1 << TXEN0) | (1 << RXEN0) | (1 << RXCIE0);
     UCSR0C = (1 << USBS0) | (3 << UCSZ00);
 }

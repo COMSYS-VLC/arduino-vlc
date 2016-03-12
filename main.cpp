@@ -1,6 +1,6 @@
 #include <avr/interrupt.h>
 
-#ifdef TRAIN
+#ifdef TRAIN // We're a train
 #include "TrainController.hpp"
 
 int main() {
@@ -10,7 +10,7 @@ int main() {
 
     train.run();
 }
-#elif defined(CONTROLLER)
+#elif defined(CONTROLLER) // We're a station
 #include "StationController.hpp"
 
 int main() {
@@ -20,13 +20,13 @@ int main() {
 
     station.run();
 }
-#elif defined(EVA_RECV)
-#include "SchrottPHY.hpp"
-#include "SchrottMAC.hpp"
+#elif defined(EVA_RECV) // We're the receiving end of an evaluation setup
+#include "VLCPHY.hpp"
+#include "VLCMAC.hpp"
 
 int main() {
-    SchrottPHY phy;
-    SchrottMAC mac(phy);
+    VLCPHY phy;
+    VLCMAC mac(phy);
 
     sei();
 
@@ -35,9 +35,9 @@ int main() {
     }
 }
 
-#elif defined(EVA_SEND)
-#include "SchrottPHY.hpp"
-#include "SchrottMAC.hpp"
+#elif defined(EVA_SEND)  // We're the sending end of an evaluation setup
+#include "VLCPHY.hpp"
+#include "VLCMAC.hpp"
 #include "Clock.hpp"
 #include "UART.hpp"
 
@@ -52,8 +52,8 @@ static void writeStats(void*) {
 }
 
 int main() {
-    SchrottPHY phy;
-    SchrottMAC mac(phy);
+    VLCPHY phy;
+    VLCMAC mac(phy);
 
     sei();
 

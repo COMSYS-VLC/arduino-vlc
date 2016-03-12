@@ -1,16 +1,13 @@
-//
-// Created by jan on 01.03.16.
-//
-
 #include <avr/interrupt.h>
 #include "TurnoutController.hpp"
-
 
 #define SET_BIT(x, y)   x |=  _BV(y)
 #define CLEAR_BIT(x, y) x &= ~_BV(y)
 
+/** Current instance of the turnout controller */
 static TurnoutController* turnout = 0;
 
+/** "Unimportant" stopping delay timer interrupt */
 ISR(TIMER3_COMPB_vect, ISR_NOBLOCK) {
     turnout->isr();
 }

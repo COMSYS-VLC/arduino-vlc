@@ -1,13 +1,11 @@
-//
-// Created by ney on 07.03.2016.
-//
-
 #include "Clock.hpp"
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+/** centiseconds since the last main thread handling */
 static volatile uint8_t timePassed = 0;
 
+/** ISR for increasing the passed time */
 ISR(TIMER5_COMPA_vect) {
     ++timePassed;
 }
@@ -24,6 +22,7 @@ Clock::Clock() {
 }
 
 void Clock::execDelayed(uint16_t delayms, Clock::TimerCallback callback, void *data) {
+    // find unused slot
     uint8_t i = 0;
     for(; SLOTS > i; ++i) {
         if(!mEntries[i].used) {
